@@ -32,13 +32,13 @@ describe("parseApiError", () => {
   it("maps ECONNABORTED to timeout message", () => {
     const err = new AxiosError("timeout", "ECONNABORTED");
     expect(parseApiError(err).status).toBe(0);
-    expect(parseApiError(err).message).toMatch(/Tiempo de espera/i);
+    expect(parseApiError(err).message).toMatch(/timed out/i);
   });
 
   it("maps ERR_NETWORK to offline message", () => {
     const err = new AxiosError("net", "ERR_NETWORK");
     expect(parseApiError(err).status).toBe(0);
-    expect(parseApiError(err).message).toMatch(/Sin conexión/i);
+    expect(parseApiError(err).message).toMatch(/no connection/i);
   });
 
   it("extracts detail from response body", () => {
@@ -54,16 +54,16 @@ describe("parseApiError", () => {
 
   it("falls back to status default when no body message", () => {
     const err = axiosResponseError(403, {});
-    expect(parseApiError(err).message).toMatch(/permiso/i);
+    expect(parseApiError(err).message).toMatch(/permission/i);
   });
 
   it("falls back to generic 5xx text", () => {
     const err = axiosResponseError(599, {});
-    expect(parseApiError(err).message).toMatch(/servidor/i);
+    expect(parseApiError(err).message).toMatch(/server/i);
   });
 
   it("handles unknown error type", () => {
-    expect(parseApiError("oops").message).toMatch(/algo salió mal/i);
+    expect(parseApiError("oops").message).toMatch(/something went wrong/i);
     expect(parseApiError(undefined).status).toBe(0);
   });
 });

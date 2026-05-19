@@ -96,7 +96,7 @@ api.interceptors.response.use(
       // Refresh failed → tokens already cleared; surface friendly toast.
       const apiError = toApiError(error);
       if (!original._silent) {
-        toast.error("Sesión expirada, inicia sesión.");
+        toast.error("Session expired, please sign in.");
       }
       return Promise.reject(apiError);
     }

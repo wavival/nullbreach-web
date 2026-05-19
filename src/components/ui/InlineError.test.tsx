@@ -13,14 +13,14 @@ describe("<InlineError />", () => {
   it("omits retry button when onRetry not provided", () => {
     render(<InlineError message="Boom" />);
     expect(
-      screen.queryByRole("button", { name: /reintentar/i }),
+      screen.queryByRole("button", { name: /retry/i }),
     ).not.toBeInTheDocument();
   });
 
   it("fires onRetry when button clicked", async () => {
     const onRetry = vi.fn();
     render(<InlineError message="Boom" onRetry={onRetry} />);
-    await userEvent.click(screen.getByRole("button", { name: /reintentar/i }));
+    await userEvent.click(screen.getByRole("button", { name: /retry/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

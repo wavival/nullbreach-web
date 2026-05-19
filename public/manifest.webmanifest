@@ -1,8 +1,8 @@
 {
   "name": "NullBreach",
   "short_name": "NullBreach",
-  "description": "Asistente de ciberseguridad con IA. Vulnerabilidades, OWASP, threat modeling y análisis estático de código fuente.",
-  "lang": "es",
+  "description": "AI cybersecurity assistant. Vulnerabilities, OWASP, threat modeling, and static source code analysis.",
+  "lang": "en",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -28,14 +28,14 @@ describe("<Login />", () => {
   it("renders both tabs and panels", () => {
     renderLogin();
     expect(screen.getByRole("tab", { name: /login/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /registro/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /register/i })).toBeInTheDocument();
   });
 
   it("shows validation errors when login submitted empty", async () => {
     renderLogin();
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
-    expect(await screen.findByText(/email requerido/i)).toBeInTheDocument();
-    expect(screen.getByText(/mínimo 8/i)).toBeInTheDocument();
+    expect(await screen.findByText(/email required/i)).toBeInTheDocument();
+    expect(screen.getByText(/minimum 8/i)).toBeInTheDocument();
   });
 
   it("validates email format", async () => {
@@ -43,7 +43,7 @@ describe("<Login />", () => {
     await userEvent.type(screen.getByLabelText(/^email$/i), "not-an-email");
     await userEvent.type(screen.getByLabelText(/^password$/i), "longenough");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
-    expect(await screen.findByText(/email inválido/i)).toBeInTheDocument();
+    expect(await screen.findByText(/invalid email/i)).toBeInTheDocument();
   });
 
   it("surfaces friendly message on 401", async () => {
@@ -55,7 +55,7 @@ describe("<Login />", () => {
     await userEvent.type(screen.getByLabelText(/^password$/i), "badpassword");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     expect(
-      await screen.findByText(/credenciales inválidas/i),
+      await screen.findByText(/invalid credentials/i),
     ).toBeInTheDocument();
     expect(tokenStore.getAccess()).toBeNull();
   });
@@ -89,15 +89,15 @@ describe("<Login />", () => {
     await userEvent.type(screen.getByLabelText(/^password$/i), "password123");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     expect(
-      await screen.findByText(/error del servidor/i),
+      await screen.findByText(/server error/i),
     ).toBeInTheDocument();
   });
 
   it("switches to register panel via tab", async () => {
     renderLogin();
-    await userEvent.click(screen.getByRole("tab", { name: /registro/i }));
+    await userEvent.click(screen.getByRole("tab", { name: /register/i }));
     expect(
-      await screen.findByRole("button", { name: /crear cuenta/i }),
+      await screen.findByRole("button", { name: /create account/i }),
     ).toBeInTheDocument();
   });
 });

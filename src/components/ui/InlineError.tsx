@@ -30,7 +30,7 @@ export function InlineError({ message, onRetry, className }: InlineErrorProps) {
             "transition-colors duration-hover",
           )}
         >
-          Reintentar
+          Retry
         </button>
       )}
     </div>

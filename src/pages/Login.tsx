@@ -25,18 +25,18 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 /* ------------------------------------------------------------------ */
 
 const loginSchema = z.object({
-  email: z.string().min(1, "Email requerido").email("Email inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  email: z.string().min(1, "Email required").email("Invalid email"),
+  password: z.string().min(8, "Minimum 8 characters"),
 });
 
 const registerSchema = z
   .object({
-    email: z.string().min(1, "Email requerido").email("Email inválido"),
-    password: z.string().min(8, "Mínimo 8 caracteres"),
-    confirmPassword: z.string().min(1, "Confirma tu contraseña"),
+    email: z.string().min(1, "Email required").email("Invalid email"),
+    password: z.string().min(8, "Minimum 8 characters"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((d) => d.password === d.confirmPassword, {
-    message: "Las contraseñas no coinciden",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -179,7 +179,7 @@ export function Login() {
                 id="tab-register"
                 controls="panel-register"
               >
-                Registro
+                Register
               </TabButton>
               {/* Sliding underline indicator */}
               <span
@@ -390,7 +390,7 @@ function FloatingField<TForm extends Record<string, unknown>>({
           <button
             type="button"
             onClick={() => setReveal((v) => !v)}
-            aria-label={reveal ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-label={reveal ? "Hide password" : "Show password"}
             aria-pressed={reveal}
             tabIndex={0}
             className={cn(
@@ -517,15 +517,15 @@ function LoginForm({
     setApiError(null);
     try {
       await login(values.email, values.password);
-      showSuccess("Inicio de sesión exitoso");
+      showSuccess("Login successful");
       onSuccess();
     } catch (err) {
       const parsed = parseApiError(err);
       const friendly =
         parsed.status === 401
-          ? "Credenciales inválidas."
+          ? "Invalid credentials."
           : parsed.status >= 500
-            ? "Error del servidor."
+            ? "Server error."
             : parsed.message;
       setApiError(friendly);
     }
@@ -577,8 +577,8 @@ function LoginForm({
         className="text-body-sm text-foreground-muted text-center animate-fade-in-up"
         style={{ animationDelay: "150ms" }}
       >
-        ¿No tienes cuenta?{" "}
-        <SwitchLink onClick={onSwitchToRegister}>Regístrate</SwitchLink>
+        Don't have an account?{" "}
+        <SwitchLink onClick={onSwitchToRegister}>Sign up</SwitchLink>
       </p>
     </form>
   );
@@ -610,17 +610,17 @@ function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
     setApiError(null);
     try {
       await registerUser(values.email, values.password);
-      showSuccess("Cuenta creada exitosamente");
+      showSuccess("Account created successfully");
       onSuccess(values.email);
     } catch (err) {
       const parsed = parseApiError(err);
       const friendly =
         parsed.status === 409
-          ? "Email ya existe."
+          ? "Email already exists."
           : parsed.status === 400 || parsed.status === 422
-            ? parsed.message || "Contraseña débil."
+            ? parsed.message || "Weak password."
             : parsed.status >= 500
-              ? "Error del servidor."
+              ? "Server error."
               : parsed.message;
       setApiError(friendly);
     }
@@ -664,7 +664,7 @@ function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
       <FloatingField<RegisterFormData>
         id="register-confirm"
         name="confirmPassword"
-        label="Confirmar password"
+        label="Confirm password"
         type="password"
         autoComplete="new-password"
         icon={Lock}
@@ -677,15 +677,15 @@ function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
         className="animate-fade-in-up"
         style={{ animationDelay: "150ms" }}
       >
-        <SubmitButton loading={isSubmitting}>Crear cuenta</SubmitButton>
+        <SubmitButton loading={isSubmitting}>Create account</SubmitButton>
       </div>
 
       <p
         className="text-body-sm text-foreground-muted text-center animate-fade-in-up"
         style={{ animationDelay: "200ms" }}
       >
-        ¿Ya tienes cuenta?{" "}
-        <SwitchLink onClick={onSwitchToLogin}>Inicia sesión</SwitchLink>
+        Already have an account?{" "}
+        <SwitchLink onClick={onSwitchToLogin}>Sign in</SwitchLink>
       </p>
     </form>
   );
@@ -759,10 +759,10 @@ function RegisterSuccess({ email, onGoToLogin }: RegisterSuccessProps) {
 
       <div>
         <h3 className="font-headline text-h3 text-foreground mb-xs">
-          Cuenta creada exitosamente
+          Account created successfully
         </h3>
         <p className="text-body text-foreground-muted">
-          Inicia sesión con tus credenciales para continuar.
+          Sign in with your credentials to continue.
         </p>
         <p className="mt-sm text-body-sm text-foreground-muted break-all">
           <span className="text-foreground font-medium">{email}</span>
@@ -782,11 +782,11 @@ function RegisterSuccess({ email, onGoToLogin }: RegisterSuccessProps) {
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-alt",
         )}
       >
-        Ir a login
+        Go to login
       </button>
 
       <p className="text-body-sm text-foreground-muted">
-        Cambiando automáticamente en 2 segundos…
+        Switching automatically in 2 seconds…
       </p>
     </div>
   );

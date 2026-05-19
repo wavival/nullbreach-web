@@ -30,9 +30,9 @@ describe("formatTimestamp", () => {
 });
 
 describe("formatTimestampWithToday", () => {
-  it("prefixes Hoy for same-day timestamp", () => {
+  it("prefixes Today for same-day timestamp", () => {
     const iso = new Date("2026-05-11T09:05:00").toISOString();
-    expect(formatTimestampWithToday(iso)).toMatch(/^Hoy \d{2}:\d{2}$/);
+    expect(formatTimestampWithToday(iso)).toMatch(/^Today \d{2}:\d{2}$/);
   });
 
   it("falls back to dd/MM for other day", () => {

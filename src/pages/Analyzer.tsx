@@ -153,7 +153,7 @@ export function Analyzer() {
     const trimmed = code.trim();
     setValidationError(null);
     if (trimmed.length === 0) {
-      const msg = "Código vacío";
+      const msg = "Empty code";
       setValidationError(msg);
       showError(msg);
       return;
@@ -175,7 +175,7 @@ export function Analyzer() {
         signal: abortControllerRef.current.signal,
       });
       setResult(data);
-      showSuccess("Análisis completado");
+      showSuccess("Analysis complete");
     } catch (err) {
       if (abortControllerRef.current?.signal.aborted) {
         return;
@@ -184,7 +184,7 @@ export function Analyzer() {
       const friendly =
         parsed.status >= 500
           ? parsed.message
-          : "Error analizando código";
+          : "Error analyzing code";
       setError(friendly);
       showError(friendly);
     } finally {
@@ -200,14 +200,14 @@ export function Analyzer() {
       <header className="flex flex-col gap-sm">
         <div className="flex items-center gap-sm text-foreground-muted">
           <ShieldCheck className="size-4 text-primary" />
-          <span className="text-body-sm">Análisis estático</span>
+          <span className="text-body-sm">Static analysis</span>
         </div>
         <h1 className="font-headline text-h1 text-foreground">
           Code Analyzer
         </h1>
         <p className="text-body text-foreground-muted max-w-[640px]">
-          Pega código fuente para detectar vulnerabilidades, malas prácticas y
-          posibles vectores de ataque.
+          Paste source code to detect vulnerabilities, bad practices, and
+          possible attack vectors.
         </p>
       </header>
 
@@ -223,7 +223,7 @@ export function Analyzer() {
             className="text-body font-medium text-foreground flex items-center gap-sm"
           >
             <Code className="size-4 text-primary" />
-            Código fuente
+            Source code
           </label>
           <LanguageSelect
             value={language}
@@ -241,7 +241,7 @@ export function Analyzer() {
           }}
           disabled={loading}
           spellCheck={false}
-          placeholder="// Pega tu código aquí..."
+          placeholder="// Paste your code here..."
           rows={14}
           className={cn(
             "w-full resize-y rounded p-md",
@@ -266,7 +266,7 @@ export function Analyzer() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
           <p className="text-body-sm text-foreground-muted">
-            {code.length} caracteres
+            {code.length} characters
           </p>
           <button
             type="button"
@@ -286,12 +286,12 @@ export function Analyzer() {
             {loading ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Analizando…
+                Analyzing…
               </>
             ) : (
               <>
                 <Sparkles className="size-4" />
-                Analizar
+                Analyze
               </>
             )}
           </button>
@@ -403,7 +403,7 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
-        aria-label="Lenguaje"
+        aria-label="Language"
         onClick={() => !disabled && setOpen((o) => !o)}
         onKeyDown={onTriggerKey}
         className={cn(
@@ -496,7 +496,7 @@ function LanguageMatchBadge({ detected, selected }: LanguageMatchBadgeProps) {
   if (!detected) {
     return (
       <div className="rounded border border-border bg-surface px-md py-sm text-body-sm text-foreground-muted">
-        No se pudo detectar el lenguaje automáticamente.
+        Could not detect the language automatically.
       </div>
     );
   }
@@ -510,8 +510,8 @@ function LanguageMatchBadge({ detected, selected }: LanguageMatchBadgeProps) {
         <span aria-hidden="true">✓</span>
         <span>
           {selected === "auto"
-            ? `Lenguaje detectado: ${detectedLabel}`
-            : "El lenguaje coincide con el código."}
+            ? `Detected language: ${detectedLabel}`
+            : "Language matches the code."}
         </span>
       </div>
     );
@@ -524,7 +524,7 @@ function LanguageMatchBadge({ detected, selected }: LanguageMatchBadgeProps) {
     >
       <span aria-hidden="true">⚠️</span>
       <span>
-        Detectado: {detectedLabel} | Seleccionado:{" "}
+        Detected: {detectedLabel} | Selected:{" "}
         {LANGUAGE_META[selected].label}
       </span>
     </div>
@@ -542,7 +542,7 @@ function LoadingPanel() {
     >
       <Loader2 className="size-8 animate-spin text-primary" />
       <p className="text-body text-foreground-muted">
-        Analizando código. Puede tardar unos segundos…
+        Analyzing code. This may take a few seconds…
       </p>
     </div>
   );
@@ -563,7 +563,7 @@ function ResultPanel({ result }: { result: AnalyzeResponse }) {
         <div className="size-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
           <ShieldCheck className="size-4 text-primary" />
         </div>
-        <h2 className="font-headline text-h4 text-foreground">Resultado</h2>
+        <h2 className="font-headline text-h4 text-foreground">Result</h2>
       </header>
 
       {vulns.length > 0 && (
@@ -584,7 +584,7 @@ function ResultPanel({ result }: { result: AnalyzeResponse }) {
 
       {!text && vulns.length === 0 && (
         <p className="text-body-sm text-foreground-muted">
-          Sin hallazgos. El analizador no devolvió resultados.
+          No findings. The analyzer returned no results.
         </p>
       )}
     </section>
@@ -613,7 +613,7 @@ function VulnCard({ vuln }: { vuln: Vulnerability }) {
         </span>
       </div>
       {typeof vuln.line === "number" && (
-        <p className="text-body-sm text-foreground-muted">Línea {vuln.line}</p>
+        <p className="text-body-sm text-foreground-muted">Line {vuln.line}</p>
       )}
       {vuln.description && (
         <p className="text-body-sm text-foreground">{vuln.description}</p>

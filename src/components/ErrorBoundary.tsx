@@ -39,11 +39,11 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           <div>
             <h1 className="font-headline text-h3 text-foreground mb-xs">
-              Algo salió mal
+              Something went wrong
             </h1>
             <p className="text-body text-foreground-muted">
-              La aplicación encontró un error inesperado. Recarga la página
-              para continuar.
+              The application encountered an unexpected error. Reload the page
+              to continue.
             </p>
           </div>
           {import.meta.env.DEV && (
@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className="inline-flex items-center gap-sm h-10 px-lg rounded bg-primary text-primary-foreground font-medium hover:brightness-110 transition-all"
           >
             <RefreshCw className="size-4" />
-            Recargar
+            Reload
           </button>
         </div>
       </div>

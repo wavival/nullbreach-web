@@ -15,7 +15,7 @@ import { InlineError } from "@/components/ui/InlineError";
 import type { ChatSession } from "@/types/chat";
 
 export function Home() {
-  usePageTitle("Inicio");
+  usePageTitle("Home");
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -74,15 +74,15 @@ export function Home() {
         <div className="flex items-center gap-sm text-foreground-muted">
           <Sparkles className="size-4 text-primary" />
           <span className="text-body-sm">
-            {user?.email ? `Hola, ${user.email}` : "Bienvenido"}
+            {user?.email ? `Hi, ${user.email}` : "Welcome"}
           </span>
         </div>
         <h1 className="font-headline text-h1 text-foreground">
-          Tus conversaciones
+          Your conversations
         </h1>
         <p className="text-body text-foreground-muted max-w-[640px]">
-          Continúa donde lo dejaste o empieza una nueva conversación sobre
-          ciberseguridad.
+          Pick up where you left off or start a new conversation about
+          cybersecurity.
         </p>
       </header>
 
@@ -102,13 +102,13 @@ export function Home() {
           )}
         >
           <MessageSquarePlus className="size-4" />
-          {creating ? "Creando…" : "Nueva conversación"}
+          {creating ? "Creating…" : "New conversation"}
         </button>
 
         {!loading && !error && sessions.length > 0 && (
           <span className="text-body-sm text-foreground-muted">
             {sessions.length}{" "}
-            {sessions.length === 1 ? "conversación" : "conversaciones"}
+            {sessions.length === 1 ? "conversation" : "conversations"}
           </span>
         )}
       </div>
@@ -152,7 +152,7 @@ function SessionCard({
   session: ChatSession;
   onClick: () => void;
 }) {
-  const title = session.title?.trim() || "Nueva conversación";
+  const title = session.title?.trim() || "New conversation";
   const ts = session.updated_at || session.created_at;
   return (
     <button
@@ -211,11 +211,11 @@ function EmptyState() {
         <MessageSquarePlus className="size-6 text-primary" />
       </div>
       <h3 className="font-headline text-h4 text-foreground mb-xs">
-        Comienza una nueva conversación
+        Start a new conversation
       </h3>
       <p className="max-w-[420px] text-body-sm text-foreground-muted">
-        Aún no tienes conversaciones. Crea una para empezar a hablar sobre
-        ciberseguridad.
+        You don't have any conversations yet. Create one to start chatting
+        about cybersecurity.
       </p>
     </div>
   );

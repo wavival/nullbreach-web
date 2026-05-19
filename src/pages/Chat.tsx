@@ -152,7 +152,7 @@ export function Chat() {
       } catch (err) {
         const parsed = parseApiError(err);
         const friendly =
-          parsed.status === 404 ? "Sesión no encontrada" : parsed.message;
+          parsed.status === 404 ? "Session not found" : parsed.message;
         setMessagesError(friendly);
         showError(friendly);
       } finally {
@@ -257,7 +257,7 @@ export function Chat() {
           silent: true,
         });
         setSessions((prev) => prev.map((s) => (s.id === id ? updated : s)));
-        showSuccess("Título actualizado");
+        showSuccess("Title updated");
       } catch (err) {
         setSessions((prev) =>
           prev.map((s) => (s.id === id ? { ...s, title: prevTitle } : s)),
@@ -265,8 +265,8 @@ export function Chat() {
         const parsed = parseApiError(err);
         const friendly =
           parsed.status === 404
-            ? "Sesión no encontrada"
-            : "Error actualizando título";
+            ? "Session not found"
+            : "Error updating title";
         setSessionsError(friendly);
         showError(friendly);
       }
@@ -381,8 +381,8 @@ export function Chat() {
         const parsed = parseApiError(err);
         const friendly =
           parsed.status === 404
-            ? "Sesión no encontrada"
-            : "Error enviando mensaje";
+            ? "Session not found"
+            : "Error sending message";
         setSendError(friendly);
         showError(friendly);
       } finally {
@@ -543,11 +543,11 @@ export function Chat() {
       {/* Delete confirm modal */}
       {deleteTarget && (
         <ConfirmModal
-          title="Eliminar conversación"
-          description={`Se eliminará "${
-            deriveTitle(deleteTarget, []) || "esta conversación"
-          }" y todos sus mensajes. Esta acción no se puede deshacer.`}
-          confirmLabel="Eliminar"
+          title="Delete conversation"
+          description={`"${
+            deriveTitle(deleteTarget, []) || "this conversation"
+          }" and all its messages will be deleted. This action cannot be undone.`}
+          confirmLabel="Delete"
           onCancel={() => setDeleteTarget(null)}
           onConfirm={handleDeleteConfirm}
         />
@@ -618,7 +618,7 @@ function SessionsSidebar({
           <div className="flex items-center gap-sm min-w-0">
             <Sparkles className="size-4 text-primary shrink-0" />
             <span className="font-headline text-h4 text-foreground truncate">
-              Sesiones
+              Sessions
             </span>
           </div>
         )}
@@ -631,8 +631,8 @@ function SessionsSidebar({
           <button
             type="button"
             onClick={onNew}
-            aria-label="Nueva conversación"
-            title={expanded ? undefined : "Nueva conversación"}
+            aria-label="New conversation"
+            title={expanded ? undefined : "New conversation"}
             className={cn(
               "size-9 inline-flex items-center justify-center rounded",
               "bg-primary text-primary-foreground",
@@ -648,9 +648,9 @@ function SessionsSidebar({
             <button
               type="button"
               onClick={onToggle}
-              aria-label={expanded ? "Colapsar sesiones" : "Expandir sesiones"}
+              aria-label={expanded ? "Collapse sessions" : "Expand sessions"}
               aria-expanded={expanded}
-              title={expanded ? "Colapsar" : "Expandir"}
+              title={expanded ? "Collapse" : "Expand"}
               className={cn(
                 "size-10 inline-flex items-center justify-center rounded",
                 "text-foreground-muted hover:text-foreground",
@@ -664,7 +664,7 @@ function SessionsSidebar({
             <button
               type="button"
               onClick={onCloseDrawer}
-              aria-label="Cerrar"
+              aria-label="Close"
               className={cn(
                 "size-9 inline-flex items-center justify-center rounded",
                 "text-foreground-muted hover:text-foreground",
@@ -697,7 +697,7 @@ function SessionsSidebar({
 
         {!loading && !error && sessions.length === 0 && expanded && (
           <div className="p-md text-body-sm text-foreground-muted">
-            No hay conversaciones. Crea una con el botón +.
+            No conversations. Create one with the + button.
           </div>
         )}
 
@@ -756,7 +756,7 @@ function SessionItem({
 }: SessionItemProps) {
   const [draft, setDraft] = useState(session.title ?? "");
   const renameInputRef = useRef<HTMLInputElement | null>(null);
-  const display = session.title?.trim() || "Nueva conversación";
+  const display = session.title?.trim() || "New conversation";
 
   useEffect(() => {
     if (renaming) {
@@ -826,7 +826,7 @@ function SessionItem({
           />
           <button
             type="submit"
-            aria-label="Guardar"
+            aria-label="Save"
             className="size-7 inline-flex items-center justify-center rounded text-primary hover:bg-primary/15 transition-colors"
           >
             <Check className="size-4" />
@@ -834,7 +834,7 @@ function SessionItem({
           <button
             type="button"
             onClick={onCancelRename}
-            aria-label="Cancelar"
+            aria-label="Cancel"
             className="size-7 inline-flex items-center justify-center rounded text-foreground-muted hover:bg-surface/60 transition-colors"
           >
             <X className="size-4" />
@@ -877,7 +877,7 @@ function SessionItem({
               e.stopPropagation();
               onStartRename();
             }}
-            aria-label="Renombrar"
+            aria-label="Rename"
             className={cn(
               "size-7 inline-flex items-center justify-center rounded",
               "text-foreground-muted hover:text-secondary",
@@ -892,7 +892,7 @@ function SessionItem({
               e.stopPropagation();
               onRequestDelete();
             }}
-            aria-label="Eliminar"
+            aria-label="Delete"
             className={cn(
               "size-7 inline-flex items-center justify-center rounded",
               "text-foreground-muted hover:text-error",
@@ -969,7 +969,7 @@ function ChatHeader({
         <button
           type="button"
           onClick={onOpenDrawer}
-          aria-label="Abrir lista de sesiones"
+          aria-label="Open sessions list"
           className={cn(
             "lg:hidden size-10 inline-flex items-center justify-center shrink-0",
             "text-foreground hover:bg-surface-alt transition-colors duration-hover",
@@ -980,8 +980,8 @@ function ChatHeader({
         <button
           type="button"
           onClick={onNewSession}
-          aria-label="Nueva conversación"
-          title="Nueva conversación"
+          aria-label="New conversation"
+          title="New conversation"
           className={cn(
             "lg:hidden size-10 inline-flex items-center justify-center shrink-0",
             "text-foreground hover:bg-surface-alt transition-colors duration-hover",
@@ -1017,7 +1017,7 @@ function ChatHeader({
             type="button"
             onClick={hasSession ? startEdit : undefined}
             disabled={!hasSession}
-            title={hasSession ? "Editar título" : undefined}
+            title={hasSession ? "Edit title" : undefined}
             className={cn(
               "min-w-0 text-left rounded",
               hasSession &&
@@ -1042,7 +1042,7 @@ function ChatHeader({
           <button
             type="button"
             onClick={editing ? commit : startEdit}
-            aria-label={editing ? "Guardar título" : "Renombrar sesión"}
+            aria-label={editing ? "Save title" : "Rename session"}
             className={cn(
               "size-9 inline-flex items-center justify-center rounded",
               editing
@@ -1056,7 +1056,7 @@ function ChatHeader({
           <button
             type="button"
             onClick={onDeleteSession}
-            aria-label="Eliminar sesión"
+            aria-label="Delete session"
             className={cn(
               "size-9 inline-flex items-center justify-center rounded",
               "text-foreground-muted hover:text-error",
@@ -1088,11 +1088,11 @@ function EmptyState() {
         <Sparkles className="size-7 text-primary" />
       </div>
       <h3 className="font-headline text-h3 text-foreground mb-sm">
-        Pregunta sobre ciberseguridad
+        Ask about cybersecurity
       </h3>
       <p className="max-w-[440px] text-body text-foreground-muted">
-        Vulnerabilidades, OWASP, hardening, threat modeling, análisis de
-        código. Empieza escribiendo abajo — crearé una sesión automáticamente.
+        Vulnerabilities, OWASP, hardening, threat modeling, code analysis.
+        Start typing below — I'll create a session automatically.
       </p>
     </div>
   );
@@ -1296,7 +1296,7 @@ function ChatInput({ inputRef, disabled, onSend }: ChatInputProps) {
               onKeyDown={handleKey}
               disabled={disabled}
               rows={1}
-              placeholder="Pregunta sobre ciberseguridad..."
+              placeholder="Ask about cybersecurity..."
               className={cn(
                 "block w-full rounded resize-y",
                 "min-h-[48px] max-h-[120px]",
@@ -1313,8 +1313,8 @@ function ChatInput({ inputRef, disabled, onSend }: ChatInputProps) {
           <SendButton disabled={disabled || empty} loading={disabled} />
         </form>
         <p className="text-body-sm text-foreground-muted px-xs">
-          <kbd className="font-mono">Enter</kbd> envía ·{" "}
-          <kbd className="font-mono">Shift+Enter</kbd> nueva línea
+          <kbd className="font-mono">Enter</kbd> send ·{" "}
+          <kbd className="font-mono">Shift+Enter</kbd> new line
         </p>
       </div>
     </div>
@@ -1332,7 +1332,7 @@ function SendButton({
     <button
       type="submit"
       disabled={disabled}
-      aria-label="Enviar mensaje"
+      aria-label="Send message"
       className={cn(
         "size-12 shrink-0 inline-flex items-center justify-center rounded",
         "bg-primary text-primary-foreground",
@@ -1427,7 +1427,7 @@ function ConfirmModal({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40",
             )}
           >
-            Cancelar
+            Cancel
           </button>
           <button
             type="button"

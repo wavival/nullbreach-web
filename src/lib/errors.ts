@@ -18,20 +18,20 @@ export interface ParsedApiError {
   data: unknown;
 }
 
-const FALLBACK = "Algo salió mal.";
+const FALLBACK = "Something went wrong.";
 
 const STATUS_DEFAULTS: Record<number, string> = {
-  400: "Solicitud inválida.",
-  401: "Sesión expirada, inicia sesión.",
-  403: "No tienes permiso para esta acción.",
-  404: "Recurso no encontrado.",
-  409: "Conflicto con el estado actual del recurso.",
-  422: "Datos inválidos.",
-  429: "Demasiadas solicitudes. Inténtalo en un momento.",
-  500: "Error del servidor.",
-  502: "Servidor no disponible.",
-  503: "Servicio temporalmente fuera de línea.",
-  504: "Tiempo de espera del servidor.",
+  400: "Invalid request.",
+  401: "Session expired, please sign in.",
+  403: "You don't have permission for this action.",
+  404: "Resource not found.",
+  409: "Conflict with the current state of the resource.",
+  422: "Invalid data.",
+  429: "Too many requests. Try again in a moment.",
+  500: "Server error.",
+  502: "Server unavailable.",
+  503: "Service temporarily offline.",
+  504: "Server timeout.",
 };
 
 function extractBodyMessage(data: unknown): string | null {
@@ -55,7 +55,7 @@ function extractBodyMessage(data: unknown): string | null {
 function statusDefault(status: number): string {
   return (
     STATUS_DEFAULTS[status] ??
-    (status >= 500 ? "Error del servidor." : FALLBACK)
+    (status >= 500 ? "Server error." : FALLBACK)
   );
 }
 
@@ -67,14 +67,14 @@ export function parseApiError(err: unknown): ParsedApiError {
     if (err.code === "ECONNABORTED") {
       return {
         status: 0,
-        message: "Tiempo de espera agotado. Inténtalo de nuevo.",
+        message: "Request timed out. Try again.",
         data: null,
       };
     }
     if (err.code === "ERR_NETWORK" || !err.response) {
       return {
         status: 0,
-        message: "Sin conexión. Verifica tu internet.",
+        message: "No connection. Check your internet.",
         data: null,
       };
     }

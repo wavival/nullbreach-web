@@ -35,7 +35,7 @@ export function CodeBlock({ code, lang }: CodeBlockProps) {
         <button
           type="button"
           onClick={handleCopy}
-          aria-label="Copiar código"
+          aria-label="Copy code"
           className={cn(
             "inline-flex items-center gap-xs px-sm py-xs rounded",
             "text-body-sm text-foreground-muted hover:text-foreground",
@@ -47,7 +47,7 @@ export function CodeBlock({ code, lang }: CodeBlockProps) {
           ) : (
             <Copy className="size-3.5" />
           )}
-          {copied ? "Copiado" : "Copiar"}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       <pre className="px-md py-sm text-code font-mono text-foreground overflow-x-auto">
