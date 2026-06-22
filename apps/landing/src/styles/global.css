@@ -52,12 +52,46 @@
 }
 
 /* ------------------------------------------------------------------ */
-/*  Bilingual toggle (ES default). Only the active language renders.   */
-/*  <html data-lang> is set server-side and flipped by the React       */
-/*  LangToggle island. Strings are emitted twice via <T es en />.      */
+/*  Terminal / hacker aesthetic helpers.                               */
 /* ------------------------------------------------------------------ */
-html[data-lang="es"] [data-lang-text="en"] { display: none; }
-html[data-lang="en"] [data-lang-text="es"] { display: none; }
+@layer utilities {
+  /* Faint horizontal scanlines layered over the grid for CRT feel. */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(34, 197, 94, 0.04) 0px,
+      rgba(34, 197, 94, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: screen;
+  }
+
+  /* Blinking block cursor for command-prompt lines. */
+  .caret::after {
+    content: "";
+    display: inline-block;
+    width: 0.6em;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: theme("colors.primary.DEFAULT");
+    animation: caret-blink 1.1s steps(1) infinite;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 16px rgba(34, 197, 94, 0.45);
+  }
+}
+
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -6,7 +6,7 @@ name: Sync Docs
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
 
 concurrency:
   group: sync-docs-${{ github.ref }}

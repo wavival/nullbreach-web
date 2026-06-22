@@ -1,9 +1,9 @@
 <h1 align="left">
-  <img src="assets/icon.svg" width="32px" valign="middle">
+  <img src="../../assets/icon.svg" width="32px" valign="middle">
   NullBreach • API
 </h1>
 
-![Banner principal](assets/banner.png)
+![Banner principal](../../assets/banner.png)
 
 > NullBreach is the backend for an AI cybersecurity assistant: authenticated users chat with Claude about security and submit code snippets for an OWASP Top 10 vulnerability scan. It ships production-hardened and deploys to Railway out of the box.
 
@@ -450,8 +450,7 @@ nullbreach-api/
 ├── Procfile
 ├── pyproject.toml           # Black, isort, Ruff, coverage config
 ├── requirements.txt
-├── requirements-dev.txt
-└── LICENSE
+└── requirements-dev.txt
 ```
 
 ### Adding a new endpoint
@@ -538,16 +537,16 @@ This project is licensed under the **MIT License**, with the following clarifica
 - **Attribution**: Please credit the original author (Valentina Ramírez / @wavival)
 
 This is **not** a commercial product. It's an educational resource demonstrating 
-backend security, API design, and full-stack development practices. See the [LICENSE](./LICENSE) file for the full text.
+backend security, API design, and full-stack development practices. See the [LICENSE](../../LICENSE) file for the full text.
 
 Copyright © 2026 Valentina Ramírez.
 
 ## Contact
 
-![Banner principal](assets/footer.png)
+![Banner principal](../../assets/footer.png)
 
 <h3 align="left">
-  <img src="assets/logo-w.png" width="48px" valign="middle">
+  <img src="../../assets/logo-w.png" width="48px" valign="middle">
   Valentina Ramírez • @wavival
 </h3>
 

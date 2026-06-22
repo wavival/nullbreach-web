@@ -9,8 +9,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="size-8 animate-spin text-primary" />
+      <div role="status" className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 aria-hidden="true" className="size-8 animate-spin text-primary" />
+        <span className="sr-only">Loading…</span>
       </div>
     );
   }

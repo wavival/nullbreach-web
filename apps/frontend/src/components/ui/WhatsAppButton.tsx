@@ -10,7 +10,7 @@ export function WhatsAppButton() {
       href={WHATSAPP_URL}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat on WhatsApp"
+      aria-label="Chat on WhatsApp (opens in new tab)"
       title="Chat on WhatsApp"
       className={[
         "fixed z-40",

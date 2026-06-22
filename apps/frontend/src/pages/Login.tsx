@@ -73,7 +73,7 @@ export function Login() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const from = (location.state as { from?: string } | null)?.from ?? "/home";
   const [tab, setTab] = useState<Tab>("login");
   const [justRegisteredEmail, setJustRegisteredEmail] = useState<string | null>(
     null,
@@ -191,16 +191,10 @@ export function Login() {
               />
             </div>
 
-            {/* Cross-fade panels (remount on tab change OR state change) */}
-            <div
-              key={
-                tab === "register" && justRegisteredEmail
-                  ? "register-success"
-                  : tab
-              }
-              className="animate-fade-in"
-            >
-              {tab === "login" ? (
+            {/* Both tabpanels stay mounted so aria-controls targets always
+                resolve; the inactive one is `hidden`. */}
+            <div className="animate-fade-in">
+              <div hidden={tab !== "login"}>
                 <LoginForm
                   defaultEmail={justRegisteredEmail}
                   onSuccess={handleAuthSuccess}
@@ -209,17 +203,20 @@ export function Login() {
                     setTab("register");
                   }}
                 />
-              ) : justRegisteredEmail ? (
-                <RegisterSuccess
-                  email={justRegisteredEmail}
-                  onGoToLogin={goToLoginNow}
-                />
-              ) : (
-                <RegisterForm
-                  onSuccess={handleRegisterSuccess}
-                  onSwitchToLogin={() => setTab("login")}
-                />
-              )}
+              </div>
+              <div hidden={tab !== "register"}>
+                {justRegisteredEmail ? (
+                  <RegisterSuccess
+                    email={justRegisteredEmail}
+                    onGoToLogin={goToLoginNow}
+                  />
+                ) : (
+                  <RegisterForm
+                    onSuccess={handleRegisterSuccess}
+                    onSwitchToLogin={() => setTab("login")}
+                  />
+                )}
+              </div>
             </div>
           </div>
 
@@ -726,19 +723,12 @@ function SwitchLink({
 /*  Register success card                                             */
 /* ------------------------------------------------------------------ */
 
-const AUTO_SWITCH_MS = 2000;
-
 interface RegisterSuccessProps {
   email: string;
   onGoToLogin: () => void;
 }
 
 function RegisterSuccess({ email, onGoToLogin }: RegisterSuccessProps) {
-  useEffect(() => {
-    const t = window.setTimeout(onGoToLogin, AUTO_SWITCH_MS);
-    return () => window.clearTimeout(t);
-  }, [onGoToLogin]);
-
   return (
     <div
       role="status"
@@ -784,10 +774,6 @@ function RegisterSuccess({ email, onGoToLogin }: RegisterSuccessProps) {
       >
         Go to login
       </button>
-
-      <p className="text-body-sm text-foreground-muted">
-        Switching automatically in 2 seconds…
-      </p>
     </div>
   );
 }

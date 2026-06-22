@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -96,6 +97,24 @@ export function Chat() {
   const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const drawerRef = useFocusTrap<HTMLDivElement>(drawerOpen);
+
+  // Make the off-screen drawer inert (removes it from tab order + a11y tree).
+  // Set imperatively because `inert` isn't in React 18's JSX prop types.
+  useEffect(() => {
+    const el = drawerRef.current;
+    if (el) el.inert = !drawerOpen;
+  }, [drawerOpen, drawerRef]);
+
+  // Escape closes the mobile drawer (focus restoration handled by useFocusTrap).
+  useEffect(() => {
+    if (!drawerOpen) return;
+    function onKey(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") setDrawerOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
 
   useEffect(() => {
     return () => {
@@ -446,6 +465,11 @@ export function Chat() {
             />
           )}
           <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Sessions"
+            aria-hidden={!drawerOpen}
             className={cn(
               "fixed inset-y-0 left-0 z-40 lg:hidden",
               "transition-transform duration-modal ease-modal",
@@ -493,6 +517,10 @@ export function Chat() {
 
             <div
               ref={messagesScrollRef}
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+              aria-label="Conversation messages"
               className="flex-1 overflow-y-auto overflow-x-hidden px-md md:px-lg lg:px-xl py-md md:py-lg"
             >
               <div className="mx-auto flex w-full max-w-[860px] flex-col gap-lg">
@@ -518,6 +546,10 @@ export function Chat() {
                   ))}
 
                 {pendingAssistant && <MessageSkeleton role="assistant" />}
+
+                <p aria-live="polite" className="sr-only">
+                  {pendingAssistant ? "Assistant is responding…" : ""}
+                </p>
 
                 <div ref={messagesEndRef} />
               </div>
@@ -642,7 +674,7 @@ function SessionsSidebar({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
             )}
           >
-            <Plus className="size-4" />
+            <Plus aria-hidden="true" className="size-4" />
           </button>
           {onToggle && (
             <button
@@ -657,7 +689,7 @@ function SessionsSidebar({
                 "hover:bg-surface/60 transition-colors duration-hover",
               )}
             >
-              <Menu className="size-6" />
+              <Menu aria-hidden="true" className="size-6" />
             </button>
           )}
           {onCloseDrawer && (
@@ -671,7 +703,7 @@ function SessionsSidebar({
                 "hover:bg-surface/60 transition-colors duration-hover",
               )}
             >
-              <X className="size-4" />
+              <X aria-hidden="true" className="size-4" />
             </button>
           )}
         </div>
@@ -827,17 +859,17 @@ function SessionItem({
           <button
             type="submit"
             aria-label="Save"
-            className="size-7 inline-flex items-center justify-center rounded text-primary hover:bg-primary/15 transition-colors"
+            className="size-7 inline-flex items-center justify-center rounded text-primary hover:bg-primary/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50"
           >
-            <Check className="size-4" />
+            <Check aria-hidden="true" className="size-4" />
           </button>
           <button
             type="button"
             onClick={onCancelRename}
             aria-label="Cancel"
-            className="size-7 inline-flex items-center justify-center rounded text-foreground-muted hover:bg-surface/60 transition-colors"
+            className="size-7 inline-flex items-center justify-center rounded text-foreground-muted hover:bg-surface/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50"
           >
-            <X className="size-4" />
+            <X aria-hidden="true" className="size-4" />
           </button>
         </form>
       ) : (
@@ -882,9 +914,10 @@ function SessionItem({
               "size-7 inline-flex items-center justify-center rounded",
               "text-foreground-muted hover:text-secondary",
               "hover:bg-secondary/15 transition-colors duration-hover",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
             )}
           >
-            <Edit className="size-3.5" />
+            <Edit aria-hidden="true" className="size-3.5" />
           </button>
           <button
             type="button"
@@ -898,9 +931,10 @@ function SessionItem({
               "text-foreground-muted hover:text-error",
               "hover:bg-error/15 hover:shadow-[0_0_12px_-2px_rgba(255,139,124,0.5)]",
               "transition-all duration-hover ease-hover",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
             )}
           >
-            <Trash className="size-3.5" />
+            <Trash aria-hidden="true" className="size-3.5" />
           </button>
         </div>
       )}
@@ -973,9 +1007,10 @@ function ChatHeader({
           className={cn(
             "lg:hidden size-10 inline-flex items-center justify-center shrink-0",
             "text-foreground hover:bg-surface-alt transition-colors duration-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
           )}
         >
-          <Menu className="size-6" />
+          <Menu aria-hidden="true" className="size-6" />
         </button>
         <button
           type="button"
@@ -985,9 +1020,10 @@ function ChatHeader({
           className={cn(
             "lg:hidden size-10 inline-flex items-center justify-center shrink-0",
             "text-foreground hover:bg-surface-alt transition-colors duration-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
           )}
         >
-          <Plus className="size-6" />
+          <Plus aria-hidden="true" className="size-6" />
         </button>
         {editing && hasSession ? (
           <input
@@ -1049,9 +1085,14 @@ function ChatHeader({
                 ? "text-primary hover:bg-primary/15"
                 : "text-foreground-muted hover:text-secondary hover:bg-secondary/15",
               "transition-colors duration-hover",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
             )}
           >
-            {editing ? <Check className="size-4" /> : <Edit className="size-4" />}
+            {editing ? (
+              <Check aria-hidden="true" className="size-4" />
+            ) : (
+              <Edit aria-hidden="true" className="size-4" />
+            )}
           </button>
           <button
             type="button"
@@ -1061,9 +1102,10 @@ function ChatHeader({
               "size-9 inline-flex items-center justify-center rounded",
               "text-foreground-muted hover:text-error",
               "hover:bg-error/15 transition-colors duration-hover",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
             )}
           >
-            <Trash className="size-4" />
+            <Trash aria-hidden="true" className="size-4" />
           </button>
         </div>
       )}
@@ -1234,6 +1276,7 @@ interface ChatInputProps {
 
 function ChatInput({ inputRef, disabled, onSend }: ChatInputProps) {
   const [value, setValue] = useState("");
+  const hintId = useId();
 
   const adjustHeight = useCallback((el: HTMLTextAreaElement) => {
     el.style.height = "auto";
@@ -1296,6 +1339,8 @@ function ChatInput({ inputRef, disabled, onSend }: ChatInputProps) {
               onKeyDown={handleKey}
               disabled={disabled}
               rows={1}
+              aria-label="Message"
+              aria-describedby={hintId}
               placeholder="Ask about cybersecurity..."
               className={cn(
                 "block w-full rounded resize-y",
@@ -1312,7 +1357,7 @@ function ChatInput({ inputRef, disabled, onSend }: ChatInputProps) {
           </div>
           <SendButton disabled={disabled || empty} loading={disabled} />
         </form>
-        <p className="text-body-sm text-foreground-muted px-xs">
+        <p id={hintId} className="text-body-sm text-foreground-muted px-xs">
           <kbd className="font-mono">Enter</kbd> send ·{" "}
           <kbd className="font-mono">Shift+Enter</kbd> new line
         </p>
@@ -1345,9 +1390,9 @@ function SendButton({
       )}
     >
       {loading ? (
-        <Loader2 className="size-5 animate-spin" />
+        <Loader2 aria-hidden="true" className="size-5 animate-spin" />
       ) : (
-        <Send className="size-5" />
+        <Send aria-hidden="true" className="size-5" />
       )}
     </button>
   );
@@ -1373,6 +1418,8 @@ function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   const trapRef = useFocusTrap<HTMLDivElement>(true);
+  const titleId = useId();
+  const descId = useId();
 
   useEffect(() => {
     function handleKey(e: globalThis.KeyboardEvent) {
@@ -1394,7 +1441,8 @@ function ConfirmModal({
         ref={trapRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirm-title"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         className={cn(
           "relative z-10 w-full max-w-[420px]",
           "rounded border border-border/70",
@@ -1404,13 +1452,13 @@ function ConfirmModal({
       >
         <div className="flex items-start gap-sm mb-md">
           <div className="size-9 rounded-full bg-error/15 border border-error/40 flex items-center justify-center shrink-0">
-            <Trash className="size-4 text-error" />
+            <Trash aria-hidden="true" className="size-4 text-error" />
           </div>
           <div>
-            <h4 id="confirm-title" className="font-headline text-h4 mb-xs">
+            <h4 id={titleId} className="font-headline text-h4 mb-xs">
               {title}
             </h4>
-            <p className="text-body-sm text-foreground-muted">
+            <p id={descId} className="text-body-sm text-foreground-muted">
               {description}
             </p>
           </div>

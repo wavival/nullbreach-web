@@ -243,6 +243,8 @@ export function Analyzer() {
           spellCheck={false}
           placeholder="// Paste your code here..."
           rows={14}
+          aria-invalid={!!validationError || undefined}
+          aria-describedby="analyzer-code-error"
           className={cn(
             "w-full resize-y rounded p-md",
             "bg-surface border",
@@ -257,7 +259,7 @@ export function Analyzer() {
         />
 
         {validationError && (
-          <InlineError message={validationError} />
+          <InlineError id="analyzer-code-error" message={validationError} />
         )}
 
         {code.trim().length > 0 && (
@@ -324,6 +326,7 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
   );
   const rootRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const triggerId = "analyzer-language-trigger";
   const listId = "analyzer-language-list";
 
@@ -333,7 +336,10 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
       if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     }
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
@@ -341,6 +347,11 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("keydown", onKey);
     };
+  }, [open]);
+
+  // Move focus into the listbox when it opens so its onKeyDown handler fires.
+  useEffect(() => {
+    if (open) listRef.current?.focus();
   }, [open]);
 
   useEffect(() => {
@@ -360,6 +371,7 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
   function commit(next: Language) {
     onChange(next);
     setOpen(false);
+    triggerRef.current?.focus();
   }
 
   function onTriggerKey(e: React.KeyboardEvent<HTMLButtonElement>) {
@@ -398,6 +410,7 @@ function LanguageSelect({ value, onChange, disabled }: LanguageSelectProps) {
     <div ref={rootRef} className="relative w-full sm:w-auto">
       <button
         type="button"
+        ref={triggerRef}
         id={triggerId}
         disabled={disabled}
         aria-haspopup="listbox"
@@ -519,7 +532,7 @@ function LanguageMatchBadge({ detected, selected }: LanguageMatchBadgeProps) {
 
   return (
     <div
-      role="alert"
+      role="status"
       className="rounded border border-severity-medium bg-severity-medium/10 px-md py-sm text-body-sm text-severity-medium flex items-center gap-sm"
     >
       <span aria-hidden="true">⚠️</span>

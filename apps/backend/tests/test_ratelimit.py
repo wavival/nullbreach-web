@@ -125,9 +125,7 @@ class ChatRateLimitTests(APITestCase):
             SCAN_URL, {"code": VULNERABLE_CODE, "language": "python"}, format="json"
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            RateLimit.objects.get(user=self.user, endpoint="analyzer_scan").count, 1
-        )
+        self.assertEqual(RateLimit.objects.get(user=self.user, endpoint="analyzer_scan").count, 1)
 
 
 @override_settings(RATE_LIMITS={"chat_messages": 3, "analyzer_scan": 2})

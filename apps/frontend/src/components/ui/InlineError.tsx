@@ -5,11 +5,13 @@ interface InlineErrorProps {
   message: string;
   onRetry?: () => void;
   className?: string;
+  id?: string;
 }
 
-export function InlineError({ message, onRetry, className }: InlineErrorProps) {
+export function InlineError({ message, onRetry, className, id }: InlineErrorProps) {
   return (
     <div
+      id={id}
       role="alert"
       className={cn(
         "flex items-start gap-sm rounded px-md py-sm",

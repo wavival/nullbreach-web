@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { http, HttpResponse } from "msw";
@@ -9,7 +9,7 @@ import { server } from "@/test/server";
 import { tokenStore } from "@/services/tokenStore";
 
 function renderLogin() {
-  return render(
+  const result = render(
     <AuthProvider>
       <MemoryRouter
         initialEntries={["/login"]}
@@ -17,11 +17,18 @@ function renderLogin() {
       >
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<div>home page</div>} />
+          <Route path="/home" element={<div>home page</div>} />
         </Routes>
       </MemoryRouter>
     </AuthProvider>,
   );
+  return result;
+}
+
+// Both tabpanels stay mounted (inactive one `hidden`) so aria-controls
+// always resolves; scope field queries to the visible login panel.
+function loginPanel() {
+  return within(screen.getByRole("tabpanel", { name: /login/i }));
 }
 
 describe("<Login />", () => {
@@ -40,8 +47,8 @@ describe("<Login />", () => {
 
   it("validates email format", async () => {
     renderLogin();
-    await userEvent.type(screen.getByLabelText(/^email$/i), "not-an-email");
-    await userEvent.type(screen.getByLabelText(/^password$/i), "longenough");
+    await userEvent.type(loginPanel().getByLabelText(/^email$/i), "not-an-email");
+    await userEvent.type(loginPanel().getByLabelText(/^password$/i), "longenough");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     expect(await screen.findByText(/invalid email/i)).toBeInTheDocument();
   });
@@ -49,10 +56,10 @@ describe("<Login />", () => {
   it("surfaces friendly message on 401", async () => {
     renderLogin();
     await userEvent.type(
-      screen.getByLabelText(/^email$/i),
+      loginPanel().getByLabelText(/^email$/i),
       "wrong@example.com",
     );
-    await userEvent.type(screen.getByLabelText(/^password$/i), "badpassword");
+    await userEvent.type(loginPanel().getByLabelText(/^password$/i), "badpassword");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     expect(
       await screen.findByText(/invalid credentials/i),
@@ -63,10 +70,10 @@ describe("<Login />", () => {
   it("stores tokens and redirects on successful login", async () => {
     renderLogin();
     await userEvent.type(
-      screen.getByLabelText(/^email$/i),
+      loginPanel().getByLabelText(/^email$/i),
       "valid@example.com",
     );
-    await userEvent.type(screen.getByLabelText(/^password$/i), "password123");
+    await userEvent.type(loginPanel().getByLabelText(/^password$/i), "password123");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     await waitFor(() =>
       expect(screen.getByText("home page")).toBeInTheDocument(),
@@ -83,10 +90,10 @@ describe("<Login />", () => {
     );
     renderLogin();
     await userEvent.type(
-      screen.getByLabelText(/^email$/i),
+      loginPanel().getByLabelText(/^email$/i),
       "valid@example.com",
     );
-    await userEvent.type(screen.getByLabelText(/^password$/i), "password123");
+    await userEvent.type(loginPanel().getByLabelText(/^password$/i), "password123");
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
     expect(
       await screen.findByText(/server error/i),

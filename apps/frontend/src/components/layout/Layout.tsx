@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "./Navbar";
@@ -13,7 +13,13 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
-  const fullWidth = location.pathname.startsWith("/chat");
+  const { pathname } = location;
+  const fullWidth = pathname.startsWith("/chat");
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainRef.current?.focus();
+  }, [pathname]);
 
   function handleToggleSidebar() {
     if (typeof window !== "undefined" && window.matchMedia(MOBILE_MQ).matches) {
@@ -25,6 +31,12 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:bg-primary focus:text-primary-foreground focus:px-md focus:py-sm focus:rounded"
+      >
+        Skip to main content
+      </a>
       <Navbar
         onToggleSidebar={isAuthenticated ? handleToggleSidebar : undefined}
       />
@@ -36,7 +48,12 @@ export function Layout() {
             onClose={() => setSidebarOpen(false)}
           />
         )}
-        <main className="flex-1 overflow-y-auto min-w-0">
+        <main
+          ref={mainRef}
+          tabIndex={-1}
+          id="main-content"
+          className="flex-1 overflow-y-auto min-w-0 focus:outline-none"
+        >
           {fullWidth ? (
             <Outlet />
           ) : (

@@ -41,7 +41,9 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.example.com' }}
+          # Mirror the production origin so the CI build represents what ships
+          # (and stays consistent with netlify.toml connect-src / VITE_API_URL).
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://nullbreach-api.wavival.dev' }}
         run: npm run build
 
   landing:
@@ -64,3 +66,43 @@ jobs:
 
       - name: Build landing
         run: npm run build:landing
+
+  backend:
+    name: Backend · Lint · Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Import order check (isort)
+        run: isort --check-only .
+
+      # `manage.py test` sets _testing in settings: sqlite fallback, no
+      # ANTHROPIC_API_KEY required. Only SECRET_KEY is needed to boot.
+      - name: Test (coverage gate 80%)
+        env:
+          SECRET_KEY: ci-test-secret-key-not-used-in-prod
+        run: |
+          coverage run manage.py test tests
+          coverage report

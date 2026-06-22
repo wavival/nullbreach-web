@@ -21,6 +21,7 @@ export function Footer() {
           className="text-secondary hover:text-secondary-hover hover:underline underline-offset-2 transition-colors duration-hover ease-hover"
         >
           {new URL(AUTHOR_URL).hostname.replace(/^www\./, "")}
+          <span className="sr-only"> (opens in new tab)</span>
         </a>
       </span>
     </footer>

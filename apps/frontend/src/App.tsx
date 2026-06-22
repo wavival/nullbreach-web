@@ -25,8 +25,9 @@ const NotFound = lazy(() =>
 
 function RouteFallback() {
   return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <Loader2 className="size-8 animate-spin text-primary" />
+    <div role="status" className="flex items-center justify-center min-h-[50vh]">
+      <Loader2 aria-hidden="true" className="size-8 animate-spin text-primary" />
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }
@@ -41,10 +42,15 @@ export default function App() {
           {/* Public, no Layout */}
           <Route path="/login" element={<Login />} />
 
+          {/* The base root (/nullbreach/) is the public landing, served
+              statically — not by this SPA. Send any internal hit of "/" to the
+              authenticated dashboard at /home. */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
+
           {/* Authenticated area, wrapped in Layout */}
           <Route element={<Layout />}>
             <Route
-              path="/"
+              path="/home"
               element={
                 <ProtectedRoute>
                   <Home />

@@ -235,9 +235,9 @@ CORS_ALLOW_CREDENTIALS = True
 # Django 4+ requires the scheme on trusted origins. Needed for the Django admin
 # login when running behind Railway's TLS-terminating proxy; the JWT API itself
 # is CSRF-exempt. Defaults to the CORS origins so a single env var covers both.
-CSRF_TRUSTED_ORIGINS = env(
-    "CSRF_TRUSTED_ORIGINS", default=",".join(CORS_ALLOWED_ORIGINS)
-).split(",")
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default=",".join(CORS_ALLOWED_ORIGINS)).split(
+    ","
+)
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 # `text` formatter is for local development (human-readable). In production

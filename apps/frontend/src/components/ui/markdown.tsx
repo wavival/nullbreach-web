@@ -40,12 +40,13 @@ export function CodeBlock({ code, lang }: CodeBlockProps) {
             "inline-flex items-center gap-xs px-sm py-xs rounded",
             "text-body-sm text-foreground-muted hover:text-foreground",
             "hover:bg-surface/60 transition-colors duration-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50",
           )}
         >
           {copied ? (
-            <Check className="size-3.5 text-primary" />
+            <Check aria-hidden="true" className="size-3.5 text-primary" />
           ) : (
-            <Copy className="size-3.5" />
+            <Copy aria-hidden="true" className="size-3.5" />
           )}
           {copied ? "Copied" : "Copy"}
         </button>
@@ -131,6 +132,7 @@ export function Markdown({ children, className }: MarkdownProps) {
               className="text-primary hover:text-primary-hover hover:underline"
             >
               {c}
+              <span className="sr-only"> (opens in new tab)</span>
             </a>
           ),
         }}

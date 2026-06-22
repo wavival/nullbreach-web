@@ -14,11 +14,11 @@ interface SidebarProps {
 interface NavItem {
   to: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
 const navItems: NavItem[] = [
-  { to: "/", label: "Home", icon: Home },
+  { to: "/home", label: "Home", icon: Home },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/analyzer", label: "Analyzer", icon: Code },
 ];
@@ -75,7 +75,7 @@ export function Sidebar({ open, collapsed, onClose }: SidebarProps) {
             onClick={onClose}
             aria-label="Close"
           >
-            <X />
+            <X aria-hidden="true" />
           </Button>
         </div>
 
@@ -89,7 +89,7 @@ export function Sidebar({ open, collapsed, onClose }: SidebarProps) {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/home"}
               onClick={onClose}
               title={collapsed ? label : undefined}
               aria-label={label}
@@ -103,7 +103,7 @@ export function Sidebar({ open, collapsed, onClose }: SidebarProps) {
                 )
               }
             >
-              <Icon className="size-6 shrink-0" />
+              <Icon aria-hidden="true" className="size-6 shrink-0" />
               {!collapsed && <span>{label}</span>}
             </NavLink>
           ))}
@@ -126,7 +126,7 @@ export function Sidebar({ open, collapsed, onClose }: SidebarProps) {
               "w-full text-error hover:bg-surface",
             )}
           >
-            <LogOut className="size-6 shrink-0" />
+            <LogOut aria-hidden="true" className="size-6 shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
         </div>

@@ -1,7 +1,8 @@
 ---
 /**
- * Bilingual text. Emits both languages inline; global CSS hides the inactive
- * one based on <html data-lang>. Keeps the page static (no per-string island).
+ * Bilingual text. Renders ONLY the active language into the HTML so each URL
+ * exposes a single language to crawlers (proper i18n SEO). The active language
+ * is derived from the page path: /nullbreach/en/ → en, everything else → es.
  *
  *   <T es="Iniciar sesión" en="Sign in" />
  */
@@ -11,9 +12,9 @@ interface Props {
   class?: string;
 }
 const { es, en, class: className } = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const lang = Astro.url.pathname.startsWith(`${base}en`) ? "en" : "es";
+const text = lang === "en" ? en : es;
 ---
-<span data-lang-text="es" class={className} set:html={es} /><span
-  data-lang-text="en"
-  class={className}
-  set:html={en}
-/>
+<span class={className} set:html={text} />

@@ -14,6 +14,12 @@ export function ToastViewport() {
           boxShadow: "0 8px 12px rgba(0, 0, 0, 0.4)",
           maxWidth: "420px",
         },
+        success: {
+          ariaProps: { role: "status", "aria-live": "polite" },
+        },
+        error: {
+          ariaProps: { role: "alert", "aria-live": "assertive" },
+        },
       }}
     />
   );

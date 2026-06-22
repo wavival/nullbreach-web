@@ -1,9 +1,9 @@
 <h1 align="left">
-  <img src="assets/icon.svg" width="32px" valign="middle">
+  <img src="../../assets/icon.svg" width="32px" valign="middle">
   NullBreach • UI
 </h1>
 
-![Banner principal](assets/banner.png)
+![Banner principal](../../assets/banner.png)
 
 > NullBreach is a production-grade React interface for AI-powered security analysis. Chat with Claude about cybersecurity, submit code for instant OWASP vulnerability detection, and manage your session history, all behind JWT authentication. Deploys to Netlify in one click.
 
@@ -203,16 +203,16 @@ This project is licensed under the **MIT License**, with the following clarifica
 - **Attribution**: Please credit the original author (Valentina Ramírez / @wavival)
 
 This is **not** a commercial product. It's an educational resource demonstrating 
-backend security, API design, and full-stack development practices. See the [LICENSE](./LICENSE) file for the full text.
+frontend architecture, security practices, and full-stack development. See the [LICENSE](../../LICENSE) file for the full text.
 
 Copyright © 2026 Valentina Ramírez.
 
 ## Contact
 
-![Banner principal](assets/footer.png)
+![Banner principal](../../assets/footer.png)
 
 <h3 align="left">
-  <img src="assets/logo-w.png" width="48px" valign="middle">
+  <img src="../../assets/logo-w.png" width="48px" valign="middle">
   Valentina Ramírez • @wavival
 </h3>
 

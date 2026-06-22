@@ -22,6 +22,7 @@
     "build": "npm run build --workspace apps/frontend",
     "build:landing": "npm run build --workspace apps/landing",
     "build:all": "npm run build --workspace apps/frontend && npm run build --workspace apps/landing",
+    "build:web": "npm run build:all && node scripts/merge-dist.mjs",
     "lint": "npm run lint --workspace apps/frontend",
     "typecheck": "npm run typecheck --workspace apps/frontend",
     "test": "npm test --workspace apps/frontend"

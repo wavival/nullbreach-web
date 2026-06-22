@@ -16,6 +16,8 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const logoutRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -23,7 +25,10 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        triggerRef.current?.focus();
+      }
     }
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
@@ -31,6 +36,11 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("keydown", onKey);
     };
+  }, [menuOpen]);
+
+  // On open, move focus to the single actionable item (Logout).
+  useEffect(() => {
+    if (menuOpen) logoutRef.current?.focus();
   }, [menuOpen]);
 
   function handleLogout() {
@@ -53,14 +63,14 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
               aria-label="Toggle sidebar"
               className="[&_svg]:size-6"
             >
-              <Menu />
+              <Menu aria-hidden="true" />
             </Button>
           )}
           <Link
-            to={isAuthenticated ? "/" : "/login"}
+            to={isAuthenticated ? "/home" : "/login"}
             className="flex items-center gap-sm font-headline text-h4"
           >
-            <ShieldHalf className="text-primary size-6" />
+            <ShieldHalf aria-hidden="true" className="text-primary size-6" />
             <span className="text-primary">NullBreach</span>
           </Link>
         </div>
@@ -70,6 +80,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
             <div ref={menuRef} className="relative">
               <button
                 type="button"
+                ref={triggerRef}
                 onClick={() => setMenuOpen((o) => !o)}
                 className={cn(
                   "flex items-center gap-sm rounded pl-xs pr-md py-xs",
@@ -77,7 +88,6 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                   "hover:bg-surface-alt transition-colors duration-hover ease-hover",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
                 )}
-                aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
                 <UserBadge />
@@ -90,6 +100,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                   </span>
                 </span>
                 <ChevronDown
+                  aria-hidden="true"
                   className={cn(
                     "size-4 text-foreground-muted transition-transform duration-hover",
                     menuOpen && "rotate-180",
@@ -99,7 +110,6 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
 
               {menuOpen && (
                 <div
-                  role="menu"
                   className={cn(
                     "absolute right-0 mt-sm w-64 z-50",
                     "rounded border border-border bg-surface-alt shadow-medium",
@@ -119,7 +129,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                   </div>
                   <button
                     type="button"
-                    role="menuitem"
+                    ref={logoutRef}
                     onClick={handleLogout}
                     className={cn(
                       "w-full flex items-center gap-sm px-md py-sm text-body text-left text-error",
@@ -127,7 +137,7 @@ export function Navbar({ onToggleSidebar }: NavbarProps) {
                       "hover:bg-surface focus-visible:outline-none focus-visible:bg-surface",
                     )}
                   >
-                    <LogOut className="size-4" />
+                    <LogOut aria-hidden="true" className="size-4" />
                     <span>Logout</span>
                   </button>
                 </div>

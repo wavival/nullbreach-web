@@ -101,7 +101,7 @@ export function Home() {
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
           )}
         >
-          <MessageSquarePlus className="size-4" />
+          <MessageSquarePlus aria-hidden="true" className="size-4" />
           {creating ? "Creating…" : "New conversation"}
         </button>
 
@@ -176,7 +176,7 @@ function SessionCard({
             "group-hover:bg-primary/15",
           )}
         >
-          <MessageSquare className="size-4 text-primary" />
+          <MessageSquare aria-hidden="true" className="size-4 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-body text-foreground">
@@ -210,9 +210,9 @@ function EmptyState() {
       >
         <MessageSquarePlus className="size-6 text-primary" />
       </div>
-      <h3 className="font-headline text-h4 text-foreground mb-xs">
+      <h2 className="font-headline text-h4 text-foreground mb-xs">
         Start a new conversation
-      </h3>
+      </h2>
       <p className="max-w-[420px] text-body-sm text-foreground-muted">
         You don't have any conversations yet. Create one to start chatting
         about cybersecurity.

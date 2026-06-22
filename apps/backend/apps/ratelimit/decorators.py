@@ -1,7 +1,6 @@
 import functools
 import logging
-from datetime import datetime, time, timedelta
-from datetime import timezone as dt_timezone
+from datetime import UTC, datetime, time, timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -22,7 +21,7 @@ def _next_utc_midnight(now=None):
     """
     now = now or timezone.now()
     tomorrow = (now + timedelta(days=1)).date()
-    return datetime.combine(tomorrow, time.min, tzinfo=dt_timezone.utc)
+    return datetime.combine(tomorrow, time.min, tzinfo=UTC)
 
 
 def check_rate_limit(endpoint, limit_key):
