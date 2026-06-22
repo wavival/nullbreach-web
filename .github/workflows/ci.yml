@@ -11,8 +11,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Lint · Typecheck · Test · Build
+  frontend:
+    name: Frontend · Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Root install hydrates all npm workspaces (frontend + landing).
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test -- --reporter=default
+
+      - name: Build
+        env:
+          # Mirror the production origin so the CI build represents what ships
+          # (and stays consistent with netlify.toml connect-src / VITE_API_URL).
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://nullbreach-api.wavival.dev' }}
+        run: npm run build
+
+  landing:
+    name: Landing · Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,16 +64,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Build landing
+        run: npm run build:landing
 
-      - name: Typecheck
-        run: npm run typecheck
+  backend:
+    name: Backend · Lint · Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/backend
 
-      - name: Test
-        run: npm test -- --reporter=default
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Import order check (isort)
+        run: isort --check-only .
+
+      # Fail if a model change has no generated migration — would otherwise
+      # pass CI and break the Railway `release: migrate` step on deploy.
+      - name: Migrations up to date
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.example.com' }}
-        run: npm run build
+          SECRET_KEY: ci-test-secret-key-not-used-in-prod
+          DEBUG: "true"
+        run: python manage.py makemigrations --check --dry-run
+
+      # `manage.py test` sets _testing in settings: sqlite fallback, no
+      # ANTHROPIC_API_KEY required. Only SECRET_KEY is needed to boot.
+      - name: Test (coverage gate 80%)
+        env:
+          SECRET_KEY: ci-test-secret-key-not-used-in-prod
+        run: |
+          coverage run manage.py test tests
+          coverage report

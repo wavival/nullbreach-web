@@ -1,0 +1,64 @@
+---
+import Icon from "./Icon.astro";
+
+type Lang = "es" | "en";
+
+interface Props {
+  /** URL of the Spanish page (e.g. /nullbreach/). */
+  esUrl: string;
+  /** URL of the English page (e.g. /nullbreach/en/). */
+  enUrl: string;
+  /** Language of the current page. */
+  current: Lang;
+}
+
+/**
+ * Language switcher. Each language is its own crawlable URL, so switching is a
+ * navigation (not an in-place CSS swap) — the active page IS the source of
+ * truth. Pure static markup (no interactivity), so it renders to HTML with
+ * zero client JS.
+ */
+const { esUrl, enUrl, current } = Astro.props;
+
+const LABELS: Record<Lang, string> = {
+  es: "Cambiar a español",
+  en: "Switch to English",
+};
+
+const items: { lang: Lang; href: string }[] = [
+  { lang: "es", href: esUrl },
+  { lang: "en", href: enUrl },
+];
+---
+
+<div
+  class="flex items-center rounded border border-border bg-surface-alt/60 p-[2px]"
+  role="group"
+  aria-label="Language / Idioma"
+>
+  <Icon name="globe" class="mx-1 hidden size-3.5 text-foreground-muted sm:block" />
+  {
+    items.map(({ lang, href }) => {
+      const active = lang === current;
+      return (
+        <a
+          href={href}
+          hreflang={lang}
+          aria-current={active ? "true" : undefined}
+          aria-label={LABELS[lang]}
+          class:list={[
+            "h-7 min-w-[28px] rounded px-md text-body-sm font-medium uppercase tracking-wide",
+            "flex items-center justify-center",
+            "transition-colors duration-hover ease-hover",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+            active
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground-muted hover:text-foreground",
+          ]}
+        >
+          {lang}
+        </a>
+      );
+    })
+  }
+</div>

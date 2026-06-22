@@ -6,7 +6,7 @@ name: Sync Docs
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
 
 concurrency:
   group: sync-docs-${{ github.ref }}
@@ -43,7 +43,7 @@ jobs:
           # el script cae a HEAD~1 automaticamente.
           BASE_REF: ${{ github.event.before }}
           HEAD_REF: ${{ github.event.after }}
-        run: python scripts/sync-docs.py
+        run: python apps/frontend/scripts/sync-docs.py
 
       - name: Commit changes
         if: steps.sync.outputs.changed == 'true'

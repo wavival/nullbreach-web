@@ -1,36 +1,37 @@
+# Combined deploy: landing (Astro) + SPA (React) under /nullbreach.
+#   /nullbreach/            -> landing (static index.html)
+#   /nullbreach/login, /chat, /analyzer, ... -> SPA (rewritten to app.html)
+# build:web builds both apps and merges them into dist/ (see scripts/merge-dist.mjs).
 [build]
-  command = "npm run build"
+  command = "npm run build:web"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-audit --no-fund"
+  # API origin baked into the SPA bundle at build time. src/services/api.ts
+  # throws in PROD if this is unset, so it MUST live here (not just the Netlify
+  # UI). This value is coupled to the CSP connect-src below — if you change the
+  # API origin, change BOTH or the browser will block every API call.
+  VITE_API_URL = "https://nullbreach-api.wavival.dev"
 
-# SPA fallback (also handled by public/_redirects; netlify.toml takes precedence).
+# Convenience: send the bare domain root to the project base.
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/"
+  to = "/nullbreach/"
+  status = 301
+
+# SPA client-side routing fallback. Real files (landing index, _astro/*,
+# assets/*, og.jpg, ...) are served directly; only non-file paths under
+# /nullbreach (login, chat, analyzer, 404) fall through to the SPA entry.
+[[redirects]]
+  from = "/nullbreach/*"
+  to = "/nullbreach/app.html"
   status = 200
 
-# Cache hashed assets aggressively; HTML stays uncached.
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.webmanifest"
-  [headers.values]
-    Cache-Control = "public, max-age=604800"
-
-[[headers]]
-  for = "/*.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-    # Security headers. Adjust connect-src if the API origin changes.
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://nullbreach-api.wavival.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+# Cache + security headers (incl. CSP) are generated into dist/_headers by
+# scripts/merge-dist.mjs — not declared here. The CSP carries sha256 hashes of
+# Astro's inline scripts (recomputed every build, so it never drifts) and is
+# applied to all of /nullbreach/* so extension-less SPA routes (login, chat)
+# are covered too — a `for = "/*.html"` rule would have missed them.
+# connect-src is sourced from VITE_API_URL above, the single source of truth.

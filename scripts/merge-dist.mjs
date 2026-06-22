@@ -1,0 +1,116 @@
+// Merge the two app builds into a single Netlify publish dir, all under
+// /nullbreach/. The landing owns the base root (/nullbreach/index.html); the
+// React SPA serves its routes (/nullbreach/login, /chat, /analyzer) via a
+// renamed entry (app.html) that Netlify rewrites to (see netlify.toml).
+//
+// Layout produced:
+//   dist/nullbreach/index.html      <- landing (Astro)
+//   dist/nullbreach/_astro/*        <- landing assets
+//   dist/nullbreach/og.jpg, ...     <- landing public assets
+//   dist/nullbreach/app.html        <- SPA entry (frontend index.html renamed)
+//   dist/nullbreach/assets/*        <- SPA hashed assets
+import { createHash } from "node:crypto";
+import { cpSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const distRoot = resolve(root, "dist");
+const out = resolve(distRoot, "nullbreach");
+const frontendDist = resolve(root, "apps/frontend/dist");
+const landingDist = resolve(root, "apps/landing/dist");
+
+rmSync(distRoot, { recursive: true, force: true });
+mkdirSync(out, { recursive: true });
+
+// SPA first so the landing can win on any shared filenames (e.g. favicon).
+cpSync(frontendDist, out, { recursive: true });
+renameSync(resolve(out, "index.html"), resolve(out, "app.html"));
+
+// Landing second: its index.html becomes the served /nullbreach/ root.
+cpSync(landingDist, out, { recursive: true });
+
+// Crawlers only read robots.txt from the domain apex (/robots.txt), never from
+// the /nullbreach/ sub-path — so write it to the publish root, not into `out`.
+// It points to the Astro-generated sitemap and walls off the auth-only SPA
+// routes (chat/analyzer) while keeping the landing + login crawlable.
+const robots = `User-agent: *
+Allow: /
+Disallow: /nullbreach/chat
+Disallow: /nullbreach/analyzer
+
+Sitemap: https://wavival.dev/nullbreach/sitemap-index.xml
+`;
+writeFileSync(resolve(distRoot, "robots.txt"), robots);
+
+// ── Security headers (_headers) ───────────────────────────────────────────────
+// We generate Netlify's _headers instead of hardcoding the CSP in netlify.toml
+// for two reasons:
+//   1. Astro inlines an island-hydration bootstrap (and the landing inlines a
+//      pre-paint lang script) that a strict `script-src 'self'` would block.
+//      We sha256-hash every inline executable <script> in the built HTML and
+//      add the hashes to script-src, so the policy stays strict (no
+//      'unsafe-inline') yet allows exactly these scripts. Regenerated each
+//      build, so it never drifts when Astro's output changes.
+//   2. netlify.toml's `for = "/*.html"` only matches paths ending in .html, so
+//      extension-less SPA routes (/nullbreach/login, /chat) got NO CSP/HSTS.
+//      Matching `/nullbreach/*` here covers every route.
+// connect-src is sourced from VITE_API_URL (the same value baked into the SPA
+// bundle) so the API origin has a single source of truth.
+
+// Hash every inline executable <script> across all built HTML pages. Skip tags
+// with a src (external, covered by 'self') and non-JS types like
+// application/ld+json / importmap (data, never executed → CSP ignores them).
+const JS_TYPES = new Set(["", "module", "text/javascript", "application/javascript"]);
+const scriptHashes = new Set();
+for (const file of readdirSync(out)) {
+  if (!file.endsWith(".html")) continue;
+  const html = readFileSync(resolve(out, file), "utf8");
+  for (const m of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attrs = m[1];
+    if (/\bsrc\s*=/i.test(attrs)) continue;
+    const type = (attrs.match(/\btype\s*=\s*["']?([^"'\s>]*)/i)?.[1] ?? "").toLowerCase();
+    if (!JS_TYPES.has(type)) continue;
+    const body = m[2];
+    if (body.length === 0) continue;
+    scriptHashes.add(`'sha256-${createHash("sha256").update(body).digest("base64")}'`);
+  }
+}
+
+const apiOrigin = (process.env.VITE_API_URL ?? "https://nullbreach-api.wavival.dev").replace(/\/+$/, "");
+const scriptSrc = ["'self'", ...scriptHashes].join(" ");
+const csp = [
+  "default-src 'self'",
+  `script-src ${scriptSrc}`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  `connect-src 'self' ${apiOrigin}`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+const security = `  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Content-Security-Policy: ${csp}`;
+
+// More-specific asset rules win on Cache-Control; the broad /nullbreach/* rule
+// supplies security headers everywhere and no-cache for HTML/SPA routes.
+const headers = `# Generated by scripts/merge-dist.mjs — do not edit by hand.
+/nullbreach/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/nullbreach/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+/nullbreach/*
+  Cache-Control: public, max-age=0, must-revalidate
+${security}
+`;
+writeFileSync(resolve(distRoot, "_headers"), headers);
+
+console.log(
+  `merged -> dist/nullbreach (landing root + SPA app.html) + apex robots.txt + _headers (${scriptHashes.size} inline-script hashes)`,
+);

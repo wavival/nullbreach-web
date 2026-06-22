@@ -1,0 +1,174 @@
+---
+import "../styles/global.css";
+import { ViewTransitions } from "astro:transitions";
+import T from "../components/T.astro";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+// Everything is served under a base path (/nullbreach/). Normalize BASE_URL to
+// a guaranteed trailing slash so string-concatenated hrefs are well-formed.
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+// Active language is derived from the page path: /nullbreach/en/ → en, else es.
+const lang = Astro.url.pathname.startsWith(`${base}en`) ? "en" : "es";
+
+// Per-language metadata. Each URL is a standalone, single-language document.
+const COPY = {
+  es: {
+    title: "NullBreach: Asistente de ciberseguridad con IA",
+    description:
+      "NullBreach: asistente de ciberseguridad con IA. Chat sobre vulnerabilidades, OWASP, modelado de amenazas y análisis estático de código.",
+    locale: "es_ES",
+    altLocale: "en_US",
+  },
+  en: {
+    title: "NullBreach: AI cybersecurity assistant",
+    description:
+      "NullBreach: an AI-powered cybersecurity assistant. Chat about vulnerabilities, OWASP, threat modeling, and static source code analysis.",
+    locale: "en_US",
+    altLocale: "es_ES",
+  },
+} as const;
+
+const { title = COPY[lang].title, description = COPY[lang].description } =
+  Astro.props;
+
+// Absolute URLs (scrapers and hreflang need fully-qualified hrefs).
+const esUrl = new URL(base, Astro.site).href;
+const enUrl = new URL(`${base}en/`, Astro.site).href;
+const canonical = lang === "en" ? enUrl : esUrl;
+const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
+const authorUrl = "https://wavival.dev";
+
+// Structured data: the landing IS the indexable page (the SPA shell at app.html
+// is walled off), so the schema belongs here, per-language. SoftwareApplication
+// describes the product; WebSite ties the two language URLs to one site.
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "NullBreach",
+    url: canonical,
+    description,
+    applicationCategory: "SecurityApplication",
+    operatingSystem: "Web",
+    inLanguage: lang,
+    author: { "@type": "Person", name: "Valentina Ramírez", url: authorUrl },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "NullBreach",
+    url: esUrl,
+    inLanguage: lang,
+    author: { "@type": "Person", name: "Valentina Ramírez", url: authorUrl },
+  },
+];
+---
+
+<!doctype html>
+<html lang={lang} class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0F172A" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Mark JS-on before paint so scroll-reveal can start hidden without a
+         flash. No-JS users never get the `js` class → content stays visible.
+         Byte-identical across pages so merge-dist's CSP hash covers both. -->
+    <script is:inline>document.documentElement.classList.add("js");</script>
+
+    <!-- SPA-like client navigation (cross-fade) for in-site links + the
+         language switch. Falls back to full page loads without JS. -->
+    <ViewTransitions />
+
+    <link rel="icon" href={`${base}favicon.ico`} type="image/x-icon" />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <link rel="apple-touch-icon" href={`${base}favicon.svg`} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Valentina Ramírez" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- hreflang alternates: each language is its own crawlable URL. -->
+    <link rel="alternate" hreflang="es" href={esUrl} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="x-default" href={esUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NullBreach" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={COPY[lang].locale} />
+    <meta property="og:locale:alternate" content={COPY[lang].altLocale} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NullBreach" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="NullBreach" />
+
+    <!-- Structured data (SoftwareApplication + WebSite), per-language. -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:m-md focus:rounded focus:bg-primary focus:px-md focus:py-sm focus:text-primary-foreground"
+    >
+      <T es="Saltar al contenido" en="Skip to content" />
+    </a>
+    <slot />
+
+    <!-- Scroll-reveal: fade/slide [data-reveal] elements in as they enter view.
+         Astro hoists this to an external module (CSP 'self'-safe). Re-inits on
+         every ViewTransitions navigation via astro:page-load (fires on first
+         load too). Reduced-motion / no-IO → reveal everything immediately. -->
+    <script>
+      function initReveal() {
+        const els = document.querySelectorAll("[data-reveal]");
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce || !("IntersectionObserver" in window)) {
+          els.forEach((el) => el.classList.add("in"));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add("in");
+              obs.unobserve(e.target);
+            }
+          },
+          { rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
+        );
+        els.forEach((el) => io.observe(el));
+      }
+      document.addEventListener("astro:page-load", initReveal);
+    </script>
+  </body>
+</html>

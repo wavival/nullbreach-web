@@ -1,0 +1,20 @@
+---
+/**
+ * Bilingual text. Renders ONLY the active language into the HTML so each URL
+ * exposes a single language to crawlers (proper i18n SEO). The active language
+ * is derived from the page path: /nullbreach/en/ → en, everything else → es.
+ *
+ *   <T es="Iniciar sesión" en="Sign in" />
+ */
+interface Props {
+  es: string;
+  en: string;
+  class?: string;
+}
+const { es, en, class: className } = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const lang = Astro.url.pathname.startsWith(`${base}en`) ? "en" : "es";
+const text = lang === "en" ? en : es;
+---
+<span class={className} set:html={text} />

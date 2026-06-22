@@ -9,187 +9,86 @@
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-wavival.dev/nullbreach-0F172A?style=for-the-badge&logo=vercel&logoColor=white)](https://wavival.dev/nullbreach)
 [![API Docs](https://img.shields.io/badge/API_Docs-nullbreach--api.wavival.dev-0F172A?style=for-the-badge&logo=swagger&logoColor=white)](https://nullbreach-api.wavival.dev/api/docs/)
-[![Backend Repo](https://img.shields.io/badge/Backend_Repo-nullbreach--api-0F172A?style=for-the-badge&logo=github&logoColor=white)](https://github.com/wavival/nullbreach-api)
+[![Repo](https://img.shields.io/badge/Repo-nullbreach-0F172A?style=for-the-badge&logo=github&logoColor=white)](https://github.com/wavival/nullbreach)
 
-## Table of contents
+Monorepo with three apps:
 
-- [Stack](#stack)
-- [Local setup](#local-setup)
-  - [npm scripts](#npm-scripts)
-- [Environment variables](#environment-variables)
-- [Architecture](#architecture)
-  - [Auth flow](#auth-flow)
-  - [Bundle splitting](#bundle-splitting)
-- [Testing](#testing)
-- [Deploying to Netlify](#deploying-to-netlify)
-  - [One-time setup](#one-time-setup)
-  - [What's already in the repo](#whats-already-in-the-repo)
-  - [CSP](#csp)
-  - [Backend CORS](#backend-cors)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap / known gaps](#roadmap--known-gaps)
-- [License](#license)
+| App | Path | Stack | Role |
+| --- | --- | --- | --- |
+| **Frontend** | [`apps/frontend`](apps/frontend/README.md) | React 18 · Vite 8 · TypeScript · Tailwind | Authenticated SPA — chat, analyzer, account. |
+| **Landing** | [`apps/landing`](apps/landing/README.md) | Astro · Tailwind (zero client JS) | Public marketing page (ES/EN), static. Links into the SPA for sign-in. |
+| **Backend** | [`apps/backend`](apps/backend/README.md) | Django · Django REST · JWT | API — auth, chat sessions, message history, code analysis. |
 
-Related docs: [DESIGN.md](./DESIGN.md) · [COMPONENTS.md](./COMPONENTS.md) · [CONTRIBUTING.md](./CONTRIBUTING.md)
+## Layout
 
-## Stack
+```
+nullbreach/
+├── apps/
+│   ├── frontend/   # React + Vite SPA
+│   ├── landing/    # Astro landing
+│   └── backend/    # Django REST API
+├── package.json    # npm workspaces (frontend + landing)
+└── .github/        # CI
+```
 
-| Layer       | Choice                                                    |
-| ----------- | --------------------------------------------------------- |
-| Build       | Vite 5, TypeScript 5 (strict)                             |
-| UI          | React 18, React Router 6, Tailwind 3, Radix Slot          |
-| Forms       | react-hook-form + zod                                     |
-| HTTP        | axios (interceptor-based JWT refresh)                     |
-| Markdown    | react-markdown + remark-gfm                               |
-| Toasts      | react-hot-toast                                           |
-| Tests       | Vitest + Testing Library + MSW                            |
-| CI          | GitHub Actions: lint → typecheck → test → build           |
-| Hosting     | Netlify (SPA fallback + immutable asset cache + CSP)      |
+The two JS apps are npm workspaces; the backend is a standalone Python project.
 
-## Local setup
+## Quickstart
+
+JS apps (from the repo root):
 
 ```bash
-git clone git@github.com:wavival/nullbreach-web.git
-cd nullbreach-web
-npm install
-cp .env.example .env.local       # adjust VITE_API_URL if backend lives elsewhere
-npm run dev                      # http://localhost:5173/nullbreach/
+npm install            # installs frontend + landing workspaces
+npm run dev            # frontend SPA   → http://localhost:5173
+npm run dev:landing    # landing        → http://localhost:4321
+npm run build:all      # build both
 ```
 
-`vite.config.ts` pins `base: "/nullbreach/"` so dev and prod both serve the SPA under the `/nullbreach/` subpath (matches `wavival.dev/nullbreach`).
-
-Backend must be running and CORS-permissive to the dev origin.
-
-### npm scripts
-
-| Script                  | What it does                                        |
-| ----------------------- | --------------------------------------------------- |
-| `npm run dev`           | Vite dev server with HMR                            |
-| `npm run build`         | `tsc -b && vite build` → `dist/`                    |
-| `npm run preview`       | Serve the production build locally                  |
-| `npm run lint`          | ESLint 9 (flat config), zero warnings target        |
-| `npm run typecheck`     | `tsc -b` across `app` + `node` projects             |
-| `npm test`              | Vitest one-shot run                                 |
-| `npm run test:watch`    | Vitest watch mode                                   |
-| `npm run test:coverage` | Vitest + v8 coverage (`coverage/`)                  |
-
-## Environment variables
-
-All client-exposed vars must be `VITE_`-prefixed (Vite-enforced). Production builds **fail fast** when `VITE_API_URL` is unset; only dev falls back to `http://localhost:8000`.
-
-Backend is mounted at the **root** of `VITE_API_URL` (no `/api` prefix). The axios client appends paths like `/auth/login/`, `/auth/refresh/`, `/chat/sessions/` directly to the base.
-
-| Variable             | Required | Example                                       | Notes                                            |
-| -------------------- | -------- | --------------------------------------------- | ------------------------------------------------ |
-| `VITE_API_URL`       | Yes      | `https://nullbreach-api.wavival.dev`          | Base URL; the app appends `/auth/login/` etc.    |
-| `VITE_WHATSAPP_URL`  | No       | `https://wa.me/...`                           | Floating contact button. Default baked in.       |
-| `VITE_AUTHOR_NAME`   | No       | `Valentina Ramírez`                           | Footer attribution.                              |
-| `VITE_AUTHOR_URL`    | No       | `https://wavival.dev`                         | Footer link.                                     |
-
-Copy `.env.example` to `.env.local` for local overrides. `.env.production` ships the prod URL for explicit `vite build` runs outside Netlify.
-
-## Architecture
-
-```
-src/
-├── App.tsx                  React.lazy routes + Suspense
-├── main.tsx                 BrowserRouter (v7 future flags) + ErrorBoundary
-├── components/
-│   ├── ErrorBoundary.tsx    class component, dev-only stack trace
-│   ├── layout/              Layout / Navbar / Sidebar / Footer / ProtectedRoute
-│   └── ui/                  Button, Badge, Card, Input, Toast viewport, InlineError, Markdown, WhatsAppButton
-├── context/
-│   ├── auth-context.ts      bare createContext()
-│   └── AuthContext.tsx      AuthProvider (login/register/logout/setUser)
-├── hooks/                   useAuth, useError, useMediaQuery, useFocusTrap, usePageTitle
-├── lib/                     errors, toast, date, image (canvas avatar downscale), utils
-├── pages/                   Login, Home, Chat, Analyzer, NotFound
-├── services/
-│   ├── api.ts               axios instance + 401 refresh-once interceptor
-│   └── tokenStore.ts        sessionStorage-backed observable store
-├── types/                   auth, chat, api, index
-└── test/                    setup, MSW server + handlers, ambient vitest types
-```
-
-### Auth flow
-
-1. `POST /auth/login/` returns `{ access, refresh, user }`.
-2. Tokens written to `sessionStorage` via `tokenStore`. Axios request interceptor injects `Authorization: Bearer`.
-3. On `401`, response interceptor calls `POST /auth/refresh/` **once** (deduped via in-flight promise), retries the original request.
-4. Refresh failure → `tokenStore.clear()` → `AuthProvider` subscriber wipes user → `ProtectedRoute` redirects to `/login`.
-
-JWTs in `sessionStorage` are vulnerable to XSS — the Netlify CSP in `netlify.toml` is the primary mitigation. For higher-assurance setups, switch to httpOnly cookies on the backend and remove the bearer plumbing.
-
-### Bundle splitting
-
-`vite.config.ts` declares `manualChunks` for `react-vendor`, `forms`, `markdown`, `http`, `icons`. Each route is `React.lazy`-loaded. Result: first-paint of `/` skips the markdown + forms chunks entirely.
-
-## Testing
-
-Vitest + jsdom + Testing Library + MSW. Tests live next to source as `*.test.ts(x)`.
+Backend (its own toolchain):
 
 ```bash
-npm test                  # 33 tests across 6 files (~5s)
-npm run test:coverage     # writes coverage/ HTML report
+cd apps/backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # fill in secrets — NOT committed
+python manage.py migrate
+python manage.py runserver
 ```
 
-MSW intercepts `axios` at the network layer — `src/test/handlers.ts` is the default fixture, individual suites override via `server.use(...)`.
+See each app's own `README.md` for details.
 
-## Deploying to Netlify
+## Deploy
 
-### One-time setup
+Two independent targets:
 
-1. **Create site**: Netlify dashboard → *Add new site* → *Import from Git* → select repo.
-2. **Build settings** (auto-detected from `netlify.toml`):
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-   - Node version: `20` (pinned in `netlify.toml`)
-3. **Environment variables** → set in *Site settings → Environment variables*:
-   - `VITE_API_URL = https://nullbreach-api.wavival.dev`
-   - (optional) `VITE_WHATSAPP_URL`, `VITE_AUTHOR_NAME`, `VITE_AUTHOR_URL`
-4. **Custom domain**: *Domain settings* → add domain → follow CNAME instructions. SSL auto-provisions via Let's Encrypt.
-5. **Deploy**: push to `main`. GitHub Actions runs the CI pipeline; on green, Netlify auto-builds and publishes.
+**Web (frontend + landing) → Netlify.** `netlify.toml` runs `npm run build:web`,
+which builds both apps and merges them into `dist/` under `/nullbreach/` (see
+`scripts/merge-dist.mjs`). That script also generates `dist/_headers` (cache +
+CSP, with sha256 hashes of any inline scripts) and the apex `robots.txt`.
 
-### What's already in the repo
+- Publish dir: `dist`. Build command is already set in `netlify.toml`.
+- **Required build env:** `VITE_API_URL` — the API origin baked into the SPA
+  (the bundle throws at load if it's unset). It is pinned in `netlify.toml` and
+  **must match the CSP `connect-src`**, which `merge-dist.mjs` derives from the
+  same value. Change the origin in one place.
 
-- `netlify.toml` — build config, SPA redirect, immutable asset caching, security headers, CSP.
-- `public/_redirects` — belt-and-suspenders SPA fallback.
-- `public/robots.txt`, `public/sitemap.xml`, `public/manifest.webmanifest`.
-- `.github/workflows/ci.yml` — lint, typecheck, test, build gates the PR before Netlify deploys.
+**Backend → Railway** (Nixpacks; Python pinned by `.python-version`). The
+`Procfile` declares `release: migrate && createcachetable` and
+`web: gunicorn config.wsgi:application --workers 2`.
 
-### CSP
+- **Required env:** `SECRET_KEY`, `DATABASE_URL` (PostgreSQL), `ANTHROPIC_API_KEY`,
+  `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`. See `apps/backend/.env.example`.
+- SSL is delegated to the Railway proxy (`SECURE_SSL_REDIRECT=False` is
+  intentional — re-enabling it behind TLS termination causes redirect loops).
 
-`netlify.toml` sets a strict `Content-Security-Policy`. `connect-src` whitelists `https://nullbreach-api.wavival.dev`. Update that line if the API origin changes or you add 3rd-party endpoints (Sentry, PostHog, etc.).
+## Notes
 
-### Backend CORS
+- Brand/design tokens live in `apps/frontend/tailwind.config.ts`; the landing
+  mirrors them in `apps/landing/tailwind.config.ts`.
+- Secrets (`.env`) and virtualenvs (`.venv`) are git-ignored and were **not**
+  carried over when the backend was merged in.
 
-Django backend must allow the Netlify origin:
-
-```python
-# settings.py
-CORS_ALLOWED_ORIGINS = [
-    "https://wavival.dev",
-    # plus any Netlify preview / staging origins
-]
-CORS_ALLOW_CREDENTIALS = False  # we use bearer tokens, not cookies
-```
-
-## Troubleshooting
-
-| Symptom                                          | Fix                                                                                                        |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Build error: `VITE_API_URL is required`          | Set the env var in Netlify dashboard (or `.env.production` for local builds).                              |
-| Login redirect loop                              | Backend not returning a valid `access` token, or CORS blocking the response. Check Network tab.            |
-| 404 on direct deep-link (`/chat/123`)            | SPA fallback missing — verify `netlify.toml` or `public/_redirects` is published.                          |
-| Fonts flash unstyled                             | `preconnect` to `fonts.gstatic.com` is in `index.html`; if persistent, switch to self-hosted fonts.        |
-| Toast notifications stacked off-screen           | `<ToastViewport />` mounts in `App.tsx`; ensure it's not unmounted by a route guard.                       |
-
-## Roadmap / known gaps
-
-- No `AbortController` cancellation on unmounted fetches.
-- Observability hook in `ErrorBoundary` is a stub; wire Sentry or alternative.
-- Markdown contrast not WCAG-audited against the dark theme.
-- `index.css` pulls Inter + JetBrains Mono from Google Fonts; self-hosting would remove the third-party connect / FOUT risk.
+---
 
 ## License
 
@@ -202,8 +101,8 @@ This project is licensed under the **MIT License**, with the following clarifica
 - **Modify**: Adapt the code to your needs
 - **Attribution**: Please credit the original author (Valentina Ramírez / @wavival)
 
-This is **not** a commercial product. It's an educational resource demonstrating 
-backend security, API design, and full-stack development practices. See the [LICENSE](./LICENSE) file for the full text.
+This is **not** a commercial product. It's an educational resource demonstrating
+frontend architecture, security practices, and full-stack development. See the [LICENSE](LICENSE) file for the full text.
 
 Copyright © 2026 Valentina Ramírez.
 
