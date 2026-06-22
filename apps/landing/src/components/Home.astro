@@ -2,7 +2,7 @@
 import Base from "../layouts/Base.astro";
 import T from "./T.astro";
 import Icon from "./Icon.astro";
-import LangToggle from "./LangToggle.tsx";
+import LangToggle from "./LangToggle.astro";
 
 // Where the React SPA lives. Login/CTAs link into it. Override at build time
 // with PUBLIC_SPA_BASE (e.g. an absolute URL for a separate deployment).
@@ -23,7 +23,9 @@ const route = {
   en: { home: "top", features: "features", how: "how-it-works" },
 }[lang];
 const REPO_URL = "https://github.com/wavival/nullbreach";
-const AUTHOR_URL = "https://wavival.dev";
+const AUTHOR_URL = "https://github.com/wavival";
+const INSTAGRAM_URL = "https://instagram.com/wavival";
+const LINKEDIN_URL = "https://www.linkedin.com/in/wavival";
 const AUTHOR_NAME = "Valentina Ramírez";
 const YEAR = new Date().getFullYear();
 
@@ -119,6 +121,41 @@ const stats = [
   { value: "SAST", es: "Análisis de código", en: "Code analysis" },
 ] as const;
 
+// Real stack (see wavival.dev/proyectos/nullbreach).
+const stack = [
+  { key: "backend", value: "Django · DRF · PostgreSQL" },
+  { key: "frontend", value: "Astro · React · TypeScript" },
+  { key: "ai", value: "Claude API (Anthropic)" },
+  { key: "auth", value: "JWT stateless" },
+] as const;
+
+const techNotes = [
+  {
+    es: "Análisis estático que combina detección determinista de patrones con razonamiento del LLM.",
+    en: "Static analysis combining deterministic pattern detection with LLM reasoning.",
+  },
+  {
+    es: "Historial de conversación persistente por usuario, almacenado en PostgreSQL.",
+    en: "Per-user persistent conversation history, stored in PostgreSQL.",
+  },
+  {
+    es: "Cada hallazgo trae categoría OWASP, severidad y guía de remediación.",
+    en: "Every finding ships an OWASP category, severity, and remediation guidance.",
+  },
+  {
+    es: "Arquitectura desacoplada: API REST protegida con JWT + frontend estático con islas interactivas.",
+    en: "Decoupled architecture: a JWT-protected REST API + a static frontend with interactive islands.",
+  },
+] as const;
+
+// OWASP categories the analyzer flags today.
+const owaspTags = [
+  "SQL injection",
+  "XSS",
+  "hardcoded secrets",
+  "insecure error handling",
+] as const;
+
 const primaryBtn =
   "inline-flex items-center gap-sm rounded bg-primary text-primary-foreground font-mono font-medium transition-all duration-hover ease-hover hover:bg-primary-hover hover:shadow-[0_10px_30px_-8px_rgba(34,197,94,0.6)] active:bg-primary-active active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
 
@@ -132,7 +169,7 @@ const dot = "size-2.5 rounded-full";
 <Base>
   <!-- ============================== Nav ============================== -->
   <header
-    class="sticky top-0 z-50 w-full border-b border-border bg-surface/85 backdrop-blur-md"
+    class="fixed inset-x-0 top-0 z-50 w-full border-b border-border bg-surface/85 backdrop-blur-md"
   >
     <div
       class="mx-auto flex h-14 max-w-[1100px] items-center justify-between gap-md px-md md:h-navbar md:px-lg"
@@ -176,16 +213,75 @@ const dot = "size-2.5 rounded-full";
       </nav>
 
       <div class="flex items-center gap-sm">
-        <LangToggle esUrl={ES_URL} enUrl={EN_URL} current={lang} />
-        <a href={LOGIN_URL} class={`${primaryBtn} h-9 px-lg text-body`}>
+        <!-- Desktop: language + login live in the bar. -->
+        <div class="hidden md:block">
+          <LangToggle esUrl={ES_URL} enUrl={EN_URL} current={lang} />
+        </div>
+        <a
+          href={LOGIN_URL}
+          class={`${primaryBtn} hidden h-9 px-lg text-body md:inline-flex`}
+        >
           <T es="iniciar sesión" en="sign in" />
           <Icon name="arrow-right" class="size-4" />
         </a>
+
+        <!-- Mobile menu: native <details> disclosure, no JS. The nav-menu class
+             drives the open/close transition via ::details-content (global.css).
+             On mobile, nav links + language + login all live in here. -->
+        <details class="nav-menu relative md:hidden">
+          <summary
+            class="flex size-9 cursor-pointer list-none items-center justify-center rounded border border-border text-foreground-muted transition-colors hover:text-primary [&::-webkit-details-marker]:hidden"
+            aria-label="Menu"
+          >
+            <Icon name="menu" class="size-5" />
+          </summary>
+          <div
+            class="absolute right-0 top-[calc(100%+8px)] z-50 flex w-60 flex-col gap-xs rounded border border-border bg-surface p-sm font-mono text-body shadow-large"
+          >
+            <a
+              href={`#${route.features}`}
+              class="rounded px-sm py-xs text-foreground-muted hover:bg-surface-alt hover:text-primary"
+            >
+              ~/{route.features}
+            </a>
+            <a
+              href={`#${route.how}`}
+              class="rounded px-sm py-xs text-foreground-muted hover:bg-surface-alt hover:text-primary"
+            >
+              ~/{route.how}
+            </a>
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded px-sm py-xs text-foreground-muted hover:bg-surface-alt hover:text-primary"
+            >
+              ~/{lang === "en" ? "project" : "proyecto"}
+            </a>
+
+            <div class="my-xs border-t border-border"></div>
+
+            <div class="flex items-center justify-between px-sm py-xs">
+              <span class="text-body-sm uppercase text-neutral">
+                <T es="idioma" en="language" />
+              </span>
+              <LangToggle esUrl={ES_URL} enUrl={EN_URL} current={lang} />
+            </div>
+
+            <a
+              href={LOGIN_URL}
+              class="mt-xs flex items-center justify-center gap-sm rounded bg-primary px-sm py-sm text-primary-foreground"
+            >
+              <T es="iniciar sesión" en="sign in" />
+              <Icon name="arrow-right" class="size-4" />
+            </a>
+          </div>
+        </details>
       </div>
     </div>
   </header>
 
-  <main id="main" class="flex-1">
+  <main id="main" class="flex-1 pt-14 md:pt-navbar">
     <!-- ============================ Hero ============================ -->
     <section
       id={route.home}
@@ -200,7 +296,7 @@ const dot = "size-2.5 rounded-full";
       <div class="relative mx-auto max-w-[1100px] px-md py-3xl md:px-lg lg:py-4xl">
         <!-- One wide terminal window owns the hero. -->
         <div
-          class="overflow-hidden rounded-lg border border-border bg-surface/70 shadow-large backdrop-blur-sm"
+          class="window-interactive overflow-hidden rounded-lg border border-border bg-surface/70 shadow-large backdrop-blur-sm"
         >
           <!-- Title bar -->
           <div
@@ -210,7 +306,7 @@ const dot = "size-2.5 rounded-full";
             <span class={`${dot} bg-severity-high/80`}></span>
             <span class={`${dot} bg-severity-low/80`}></span>
             <span class="ml-sm font-mono text-body-sm text-foreground-muted">
-              nullbreach — scan
+              nullbreach / scan
             </span>
           </div>
 
@@ -252,8 +348,8 @@ const dot = "size-2.5 rounded-full";
               >
                 <span class="text-neutral"># </span>
                 <T
-                  es="NullBreach combina chat con IA y análisis estático de código para razonar sobre OWASP, modelado de amenazas y endurecimiento — en lenguaje claro."
-                  en="NullBreach pairs an AI chat with static code analysis to reason about OWASP, threat modeling, and hardening — in plain language."
+                  es="NullBreach combina chat con IA y análisis estático de código para razonar sobre OWASP, modelado de amenazas y endurecimiento, en lenguaje claro."
+                  en="NullBreach pairs an AI chat with static code analysis to reason about OWASP, threat modeling, and hardening, in plain language."
                 />
               </p>
 
@@ -296,27 +392,28 @@ const dot = "size-2.5 rounded-full";
 
               <!-- Mock finding rows -->
               <ul class="flex flex-col gap-xs text-foreground-muted">
-                <li class="flex items-center gap-sm">
+                <li class="flex items-center gap-sm" data-reveal data-reveal-delay="1">
                   <span class="text-severity-critical">●</span>
                   <span class="text-foreground">SQL injection</span>
                   <span class="ml-auto text-neutral">api/users.ts:42</span>
                 </li>
-                <li class="flex items-center gap-sm">
+                <li class="flex items-center gap-sm" data-reveal data-reveal-delay="2">
                   <span class="text-severity-high">●</span>
                   <span class="text-foreground">XSS</span>
                   <span class="ml-auto text-neutral">render.tsx:88</span>
                 </li>
-                <li class="flex items-center gap-sm">
+                <li class="flex items-center gap-sm" data-reveal data-reveal-delay="3">
                   <span class="text-severity-medium">●</span>
                   <span class="text-foreground">weak JWT alg</span>
                   <span class="ml-auto text-neutral">auth.ts:13</span>
                 </li>
               </ul>
 
-              <!-- Scan progress -->
+              <!-- Scan progress: bar fills on load; a soft light sweeps the
+                   track so the terminal reads as live (both motion-gated). -->
               <div class="mt-auto flex flex-col gap-xs pt-sm">
-                <div class="h-1.5 overflow-hidden rounded-full bg-border">
-                  <div class="h-full w-[72%] rounded-full bg-primary"></div>
+                <div class="scan-track relative h-1.5 overflow-hidden rounded-full bg-border">
+                  <div class="scan-bar h-full w-[72%] rounded-full bg-primary"></div>
                 </div>
                 <span class="text-neutral">
                   ▒▒▒▒▒▒▒▒▒▒ <T es="escaneando…" en="scanning…" /> 72%
@@ -325,53 +422,47 @@ const dot = "size-2.5 rounded-full";
             </div>
           </div>
         </div>
-
-        <!-- Stats strip -->
-        <dl
-          class="mt-xl grid grid-cols-3 gap-md border border-border bg-surface-alt/30 px-lg py-md font-mono"
-        >
-          {
-            stats.map((s) => (
-              <div class="flex flex-col gap-xs">
-                <dt class="text-h4 text-primary">{s.value}</dt>
-                <dd class="text-body-sm text-foreground-muted">
-                  <T es={s.es} en={s.en} />
-                </dd>
-              </div>
-            ))
-          }
-        </dl>
       </div>
     </section>
 
-    <!-- ========================== Features ========================== -->
+    <!-- ===================== Bento: tools + stack ==================== -->
     <section
       id={route.features}
       class="mx-auto max-w-[1100px] scroll-mt-navbar px-md py-3xl md:px-lg lg:py-4xl"
     >
-      <div class="flex max-w-[680px] flex-col gap-sm">
-        <span class="font-mono text-label uppercase text-primary">
-          $ ls ./<T es="herramientas" en="tools" />
-        </span>
-        <h2 class="font-mono text-h2 text-foreground">
-          <T
-            es="Seguridad ofensiva y defensiva, en un solo lugar"
-            en="Offensive and defensive security, in one place"
-          />
-        </h2>
-        <p class="font-mono text-body-lg text-foreground-muted">
-          <span class="text-neutral"># </span>
-          <T
-            es="Tres herramientas para desarrolladores y equipos de seguridad."
-            en="Three tools built for developers and security teams."
-          />
-        </p>
-      </div>
+      <div
+        class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:auto-rows-min lg:grid-cols-6 lg:gap-lg"
+      >
+        <!-- Intro tile (full width) -->
+        <div
+          data-reveal
+          class="flex flex-col gap-sm rounded-lg border border-border bg-surface-alt/40 p-lg sm:col-span-2 lg:col-span-6"
+        >
+          <span class="font-mono text-label uppercase text-primary">
+            $ ls ./<T es="herramientas" en="tools" />
+          </span>
+          <h2 class="font-mono text-h2 text-foreground">
+            <T
+              es="Seguridad ofensiva y defensiva, en un solo lugar"
+              en="Offensive and defensive security, in one place"
+            />
+          </h2>
+          <p class="max-w-[680px] font-mono text-body-lg text-foreground-muted">
+            <span class="text-neutral"># </span>
+            <T
+              es="Tres herramientas para desarrolladores y equipos de seguridad."
+              en="Three tools built for developers and security teams."
+            />
+          </p>
+        </div>
 
-      <div class="mt-2xl grid gap-lg sm:grid-cols-2 lg:grid-cols-3">
         {
-          features.map((f) => (
-            <article class="group flex flex-col gap-md rounded-lg border border-border bg-surface-alt/40 transition-all duration-hover ease-hover hover:-translate-y-[2px] hover:border-primary/50 hover:shadow-[0_12px_30px_-12px_rgba(34,197,94,0.35)]">
+          features.map((f, i) => (
+            <article
+              data-reveal
+              data-reveal-delay={String((i % 3) + 1)}
+              class="card-interactive group flex flex-col gap-md rounded-lg border border-border bg-surface-alt/40 lg:col-span-2"
+            >
               <div class="flex items-center gap-xs border-b border-border px-md py-sm">
                 <span class={`${dot} bg-severity-critical/70`} />
                 <span class={`${dot} bg-severity-high/70`} />
@@ -395,6 +486,101 @@ const dot = "size-2.5 rounded-full";
             </article>
           ))
         }
+
+        <!-- stack.json tile -->
+        <div
+          data-reveal
+          class="window-interactive overflow-hidden rounded-lg border border-border bg-surface/70 shadow-medium sm:col-span-2 lg:col-span-3"
+        >
+          <div
+            class="flex items-center gap-xs border-b border-border bg-surface-alt/60 px-md py-sm"
+          >
+            <span class={`${dot} bg-severity-critical/80`}></span>
+            <span class={`${dot} bg-severity-high/80`}></span>
+            <span class={`${dot} bg-severity-low/80`}></span>
+            <span class="ml-sm font-mono text-body-sm text-foreground-muted">
+              stack.json
+            </span>
+          </div>
+          <div
+            class="overflow-x-auto p-lg font-mono text-code leading-relaxed"
+          >
+            <div class="text-neutral">$ cat stack.json</div>
+            <div class="text-foreground-muted">{"{"}</div>
+            {
+              stack.map((s) => (
+                <div class="pl-md">
+                  <span class="text-secondary">"{s.key}"</span><span
+                    class="text-foreground-muted">: </span><span
+                    class="text-primary">"{s.value}"</span><span
+                    class="text-foreground-muted">,</span>
+                </div>
+              ))
+            }
+            <div class="text-foreground-muted">{"}"}</div>
+          </div>
+        </div>
+
+        <!-- Technical highlights tile -->
+        <div
+          data-reveal
+          class="flex flex-col gap-md rounded-lg border border-border bg-surface-alt/40 p-lg sm:col-span-2 lg:col-span-3"
+        >
+          <span class="font-mono text-label uppercase text-primary">
+            $ <T es="info" en="info" /> --tecnica
+          </span>
+          <h2 class="font-mono text-h2 text-foreground">
+            <T
+              es="Bajo el capó: moderno y desacoplado"
+              en="Under the hood: modern and decoupled"
+            />
+          </h2>
+          <ul class="flex flex-col gap-sm">
+            {
+              techNotes.map((n) => (
+                <li class="flex gap-sm text-body text-foreground-muted">
+                  <span class="mt-[2px] font-mono text-primary">&gt;</span>
+                  <span>
+                    <T es={n.es} en={n.en} />
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mt-xs flex flex-col gap-sm">
+            <span class="font-mono text-body-sm text-foreground-muted">
+              <span class="text-neutral"># </span>
+              <T es="Detecta, entre otros" en="Detects, among others" />:
+            </span>
+            <div class="flex flex-wrap gap-sm">
+              {
+                owaspTags.map((tag) => (
+                  <span class="inline-flex items-center gap-xs rounded-full border border-border bg-surface-alt/50 px-md py-xs font-mono text-body-sm text-foreground">
+                    <span class="size-1.5 rounded-full bg-severity-high" />
+                    {tag}
+                  </span>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats tile (full width) -->
+        <dl
+          data-reveal
+          class="grid grid-cols-3 gap-md rounded-lg border border-border bg-surface-alt/40 px-lg py-md font-mono sm:col-span-2 lg:col-span-6"
+        >
+          {
+            stats.map((s) => (
+              <div class="flex flex-col gap-xs">
+                <dt class="text-h4 text-primary">{s.value}</dt>
+                <dd class="text-body-sm text-foreground-muted">
+                  <T es={s.es} en={s.en} />
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
       </div>
     </section>
 
@@ -404,7 +590,7 @@ const dot = "size-2.5 rounded-full";
       class="scanlines relative scroll-mt-navbar border-y border-border bg-surface-alt/20"
     >
       <div class="relative mx-auto max-w-[1100px] px-md py-3xl md:px-lg lg:py-4xl">
-        <div class="flex max-w-[680px] flex-col gap-sm">
+        <div data-reveal class="flex max-w-[680px] flex-col gap-sm">
           <span class="font-mono text-label uppercase text-primary">
             $ <T es="historial" en="history" /> --steps
           </span>
@@ -419,7 +605,11 @@ const dot = "size-2.5 rounded-full";
         <ol class="mt-2xl grid gap-lg md:grid-cols-3">
           {
             steps.map((s, i) => (
-              <li class="relative flex flex-col gap-md rounded-lg border border-border bg-surface/60 p-lg font-mono">
+              <li
+                data-reveal
+                data-reveal-delay={String((i % 3) + 1)}
+                class="card-interactive relative flex flex-col gap-md rounded-lg border border-border bg-surface/60 p-lg font-mono"
+              >
                 <div class="flex items-center gap-md">
                   <span class="inline-flex size-8 items-center justify-center rounded border border-primary/40 bg-primary/10 text-body text-primary">
                     {String(i + 1).padStart(2, "0")}
@@ -445,7 +635,8 @@ const dot = "size-2.5 rounded-full";
     <!-- ============================ CTA ============================ -->
     <section class="mx-auto max-w-[1100px] px-md py-3xl md:px-lg lg:py-4xl">
       <div
-        class="overflow-hidden rounded-lg border border-primary/30 bg-surface/70 shadow-large"
+        data-reveal
+        class="window-interactive overflow-hidden rounded-lg border border-primary/30 bg-surface/70 shadow-large"
       >
         <div
           class="flex items-center gap-xs border-b border-border bg-surface-alt/60 px-md py-sm"
@@ -490,6 +681,70 @@ const dot = "size-2.5 rounded-full";
             <T es="iniciar sesión" en="sign in" />
             <Icon name="arrow-right" class="size-4" />
           </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== Author =========================== -->
+    <section class="mx-auto max-w-[1100px] px-md pb-3xl md:px-lg lg:pb-4xl">
+      <div
+        data-reveal
+        class="mx-auto flex w-fit flex-col items-center gap-lg rounded-lg border border-border bg-surface-alt/40 p-lg sm:flex-row sm:gap-xl sm:p-xl"
+      >
+        <!-- Photo: gradient overlay reveals socials on hover/focus (always on mobile). -->
+        <div
+          class="group relative size-32 shrink-0 overflow-hidden rounded-lg border border-border"
+        >
+          <img
+            src={`${base}profile.webp`}
+            width="128"
+            height="128"
+            loading="lazy"
+            decoding="async"
+            alt={AUTHOR_NAME}
+            class="size-full object-cover transition-transform duration-modal ease-modal group-hover:scale-105"
+          />
+          <div
+            class="absolute inset-0 flex items-end justify-center gap-sm bg-gradient-to-t from-primary/85 via-surface/40 to-transparent p-sm opacity-0 transition-opacity duration-modal group-hover:opacity-100 group-focus-within:opacity-100 max-sm:opacity-100"
+          >
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram @wavival"
+              class="inline-flex size-8 items-center justify-center rounded-full bg-surface/85 text-foreground transition-colors hover:text-primary"
+            >
+              <Icon name="instagram" class="size-4" />
+            </a>
+            <a
+              href={LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn wavival"
+              class="inline-flex size-8 items-center justify-center rounded-full bg-surface/85 text-foreground transition-colors hover:text-primary"
+            >
+              <Icon name="linkedin" class="size-4" />
+            </a>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-xs text-center sm:text-left">
+          <span class="font-mono text-label uppercase text-primary">$ whoami</span>
+          <span class="font-mono text-h3 text-foreground">{AUTHOR_NAME}</span>
+          <a
+            href={AUTHOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-mono text-body text-secondary underline-offset-2 hover:underline"
+          >
+            @wavival
+          </a>
+          <p class="mt-xs max-w-[460px] text-body text-foreground-muted">
+            <T
+              es="Desarrolladora full-stack y autora de NullBreach: backend en Django/DRF, frontend en Astro + React e integración con la Claude API."
+              en="Full-stack developer and author of NullBreach: Django/DRF backend, Astro + React frontend, and Claude API integration."
+            />
+          </p>
         </div>
       </div>
     </section>
@@ -572,27 +827,34 @@ const dot = "size-2.5 rounded-full";
           © {YEAR} NullBreach.
           <T es="Todos los derechos reservados." en="All rights reserved." />
         </span>
-        <a
-          href={AUTHOR_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="group inline-flex items-center gap-sm rounded-full transition-colors duration-hover"
-        >
-          <img
-            src={`${base}profile.webp`}
-            width="32"
-            height="32"
-            loading="lazy"
-            decoding="async"
-            alt={AUTHOR_NAME}
-            class="size-8 rounded-full border border-border object-cover"
-          />
-          <span
-            class="text-secondary underline-offset-2 group-hover:text-secondary-hover group-hover:underline"
+        <span class="inline-flex items-center gap-md">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram @wavival"
+            class="transition-colors hover:text-primary"
+          >
+            <Icon name="instagram" class="size-4" />
+          </a>
+          <a
+            href={LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="LinkedIn wavival"
+            class="transition-colors hover:text-primary"
+          >
+            <Icon name="linkedin" class="size-4" />
+          </a>
+          <a
+            href={AUTHOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-secondary underline-offset-2 hover:underline"
           >
             @wavival
-          </span>
-        </a>
+          </a>
+        </span>
       </div>
     </div>
   </footer>

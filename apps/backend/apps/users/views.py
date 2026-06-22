@@ -11,7 +11,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from apps.throttles import AuthAnonThrottle
+from apps.throttles import AuthAnonThrottle, AuthLoginThrottle
 
 from .serializers import LogoutSerializer, RegisterSerializer, UserSerializer
 
@@ -68,7 +68,7 @@ class LoginView(TokenObtainPairView):
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [AuthAnonThrottle]
+    throttle_classes = [AuthAnonThrottle, AuthLoginThrottle]
 
 
 @extend_schema(tags=["auth"], summary="Refresh access token")

@@ -1,5 +1,3 @@
-import { AxiosError } from "axios";
-
 export class ApiError extends Error {
   readonly status: number;
   readonly data: unknown;
@@ -59,33 +57,18 @@ function statusDefault(status: number): string {
   );
 }
 
+/**
+ * Build an ApiError from an HTTP response's status + parsed body. The transport
+ * layer (services/api.ts) constructs the message here so body-shape handling
+ * (DRF `detail`, field-array errors, status defaults) lives in one place.
+ */
+export function apiErrorFromResponse(status: number, data: unknown): ApiError {
+  return new ApiError(extractBodyMessage(data) ?? statusDefault(status), status, data);
+}
+
 export function parseApiError(err: unknown): ParsedApiError {
   if (err instanceof ApiError) {
     return { status: err.status, message: err.message, data: err.data };
-  }
-  if (err instanceof AxiosError) {
-    if (err.code === "ECONNABORTED") {
-      return {
-        status: 0,
-        message: "Request timed out. Try again.",
-        data: null,
-      };
-    }
-    if (err.code === "ERR_NETWORK" || !err.response) {
-      return {
-        status: 0,
-        message: "No connection. Check your internet.",
-        data: null,
-      };
-    }
-    const status = err.response.status;
-    const data = err.response.data ?? null;
-    const fromBody = extractBodyMessage(data);
-    return {
-      status,
-      message: fromBody ?? statusDefault(status),
-      data,
-    };
   }
   if (err instanceof Error) {
     return { status: 0, message: err.message || FALLBACK, data: null };

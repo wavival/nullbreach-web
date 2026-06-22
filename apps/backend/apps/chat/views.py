@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import Count
 
@@ -17,6 +19,8 @@ from apps.throttles import ClaudeChatThrottle
 from .claude import MAX_HISTORY_MESSAGES, chat_completion
 from .models import ChatSession, Message
 from .serializers import ChatSessionSerializer, MessageSerializer, SendMessageSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class ChatSessionListCreateView(GenericAPIView):
@@ -194,6 +198,12 @@ class MessageListCreateView(GenericAPIView):
             assistant_content = chat_completion(history)
         except anthropic.APIError as exc:
             return handle_claude_error(exc)
+        except ValueError as exc:
+            logger.error("Claude chat returned no usable content: %s", exc, exc_info=True)
+            return Response(
+                {"detail": "AI service returned an unexpected response. Please try again."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         # Persist user + assistant atomically so a Claude failure does not
         # leave an orphaned user message in the session.

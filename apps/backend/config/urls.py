@@ -1,11 +1,19 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from django.views.generic import RedirectView
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+
+def health(_request):
+    # Lightweight liveness probe for Railway/uptime checks — no DB or Claude.
+    return JsonResponse({"status": "ok"})
+
+
 urlpatterns = [
     path("", RedirectView.as_view(url="/api/docs/", permanent=False)),
+    path("health/", health, name="health"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.users.urls")),
     path("api/chat/", include("apps.chat.urls")),

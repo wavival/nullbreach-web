@@ -98,6 +98,14 @@ jobs:
       - name: Import order check (isort)
         run: isort --check-only .
 
+      # Fail if a model change has no generated migration — would otherwise
+      # pass CI and break the Railway `release: migrate` step on deploy.
+      - name: Migrations up to date
+        env:
+          SECRET_KEY: ci-test-secret-key-not-used-in-prod
+          DEBUG: "true"
+        run: python manage.py makemigrations --check --dry-run
+
       # `manage.py test` sets _testing in settings: sqlite fallback, no
       # ANTHROPIC_API_KEY required. Only SECRET_KEY is needed to boot.
       - name: Test (coverage gate 80%)

@@ -191,3 +191,50 @@ class AnonAuthThrottleTests(APITestCase):
             self.client.post(LOGIN_URL, {"email": "x@x.com", "password": "wrong"}, format="json")
         blocked = self.client.post(LOGIN_URL, CREDENTIALS, format="json")
         self.assertEqual(blocked.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+@override_settings(
+    REST_FRAMEWORK={
+        "DEFAULT_AUTHENTICATION_CLASSES": (
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+        ),
+        "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+        "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+        "PAGE_SIZE": 50,
+        "DEFAULT_THROTTLE_RATES": {
+            "user": "500/hour",
+            "anon": "60/hour",
+            # Per-IP limit kept high so the per-account limit is what trips.
+            "auth": "100/min",
+            "auth_login": "3/hour",
+            "claude_chat": "60/hour",
+            "claude_scan": "20/hour",
+        },
+    }
+)
+class PerAccountLoginThrottleTests(APITestCase):
+    """The per-account (email-keyed) throttle blocks single-account stuffing."""
+
+    def setUp(self):
+        cache.clear()
+        User.objects.create_user(**CREDENTIALS)
+
+    def test_repeated_failed_logins_for_one_account_return_429(self):
+        for _ in range(3):
+            self.client.post(
+                LOGIN_URL, {"email": CREDENTIALS["email"], "password": "wrong"}, format="json"
+            )
+        # 4th attempt on the same email is blocked even with the correct password.
+        blocked = self.client.post(LOGIN_URL, CREDENTIALS, format="json")
+        self.assertEqual(blocked.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_other_accounts_unaffected_by_one_accounts_limit(self):
+        for _ in range(4):
+            self.client.post(
+                LOGIN_URL, {"email": CREDENTIALS["email"], "password": "wrong"}, format="json"
+            )
+        # A different email has its own counter — not blocked by the first's.
+        other = self.client.post(
+            LOGIN_URL, {"email": "other@example.com", "password": "wrong"}, format="json"
+        )
+        self.assertEqual(other.status_code, status.HTTP_401_UNAUTHORIZED)

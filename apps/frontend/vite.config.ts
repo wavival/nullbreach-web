@@ -9,7 +9,6 @@ const vendorChunks: Record<string, string[]> = {
   "react-vendor": ["react", "react-dom", "react-router-dom"],
   forms: ["react-hook-form", "@hookform/resolvers", "zod"],
   markdown: ["react-markdown", "remark-gfm"],
-  http: ["axios"],
   icons: ["lucide-react"],
 };
 

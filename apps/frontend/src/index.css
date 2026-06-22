@@ -1,6 +1,7 @@
-/* Geist not on Google Fonts. Inter + JetBrains Mono loaded here.
-   For Geist install `geist` package or self-host. Headline stack falls back to Inter. */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+/* Geist not on Google Fonts. Inter + JetBrains Mono loaded via <link> in
+   index.html <head> (not @import here — @import serializes the request behind
+   this stylesheet, blocking first paint). For Geist install `geist` or
+   self-host. Headline stack falls back to Inter. */
 
 @tailwind base;
 @tailwind components;
@@ -15,6 +16,16 @@
   body,
   #root {
     height: 100%;
+  }
+
+  /* Smooth in-app anchor nav, offset by the fixed navbar. */
+  html {
+    scroll-padding-top: theme("spacing.navbar");
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   body {
@@ -99,5 +110,18 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: theme("colors.neutral");
+  }
+}
+
+/* Honor reduced-motion globally: neutralize entry animations (fade-in-up,
+   particles, pulses) and transitions for users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

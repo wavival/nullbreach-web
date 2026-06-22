@@ -40,4 +40,10 @@ def chat_completion(history: list[dict]) -> str:
         system=SYSTEM_PROMPT,
         messages=history,
     )
-    return response.content[0].text
+    # A refusal/stop block (or any non-text first block) leaves content without
+    # a `.text`; guard so it surfaces as a clean 502 instead of an IndexError 500.
+    blocks = getattr(response, "content", None) or []
+    text = getattr(blocks[0], "text", None) if blocks else None
+    if not text:
+        raise ValueError("Claude returned no text content.")
+    return text

@@ -36,15 +36,15 @@ Related docs: [DESIGN.md](./DESIGN.md) · [COMPONENTS.md](./COMPONENTS.md) · [C
 
 | Layer       | Choice                                                    |
 | ----------- | --------------------------------------------------------- |
-| Build       | Vite 5, TypeScript 5 (strict)                             |
+| Build       | Vite 8, TypeScript 5 (strict)                             |
 | UI          | React 18, React Router 6, Tailwind 3, Radix Slot          |
 | Forms       | react-hook-form + zod                                     |
-| HTTP        | axios (interceptor-based JWT refresh)                     |
+| HTTP        | native `fetch` wrapper (JWT refresh + 20s timeout, no deps) |
 | Markdown    | react-markdown + remark-gfm                               |
 | Toasts      | react-hot-toast                                           |
 | Tests       | Vitest + Testing Library + MSW                            |
 | CI          | GitHub Actions: lint → typecheck → test → build           |
-| Hosting     | Netlify (SPA fallback + immutable asset cache + CSP)      |
+| Hosting     | Netlify, merged with the landing under `/nullbreach/` (see root README) |
 
 ## Local setup
 
@@ -77,7 +77,7 @@ Backend must be running and CORS-permissive to the dev origin.
 
 All client-exposed vars must be `VITE_`-prefixed (Vite-enforced). Production builds **fail fast** when `VITE_API_URL` is unset; only dev falls back to `http://localhost:8000`.
 
-Backend is mounted at the **root** of `VITE_API_URL` (no `/api` prefix). The axios client appends paths like `/auth/login/`, `/auth/refresh/`, `/chat/sessions/` directly to the base.
+Backend is mounted at the **root** of `VITE_API_URL` (no `/api` prefix). The fetch client appends paths like `/auth/login/`, `/auth/refresh/`, `/chat/sessions/` directly to the base.
 
 | Variable             | Required | Example                                       | Notes                                            |
 | -------------------- | -------- | --------------------------------------------- | ------------------------------------------------ |
@@ -86,7 +86,7 @@ Backend is mounted at the **root** of `VITE_API_URL` (no `/api` prefix). The axi
 | `VITE_AUTHOR_NAME`   | No       | `Valentina Ramírez`                           | Footer attribution.                              |
 | `VITE_AUTHOR_URL`    | No       | `https://wavival.dev`                         | Footer link.                                     |
 
-Copy `.env.example` to `.env.local` for local overrides. `.env.production` ships the prod URL for explicit `vite build` runs outside Netlify.
+Copy `.env.example` to `.env.local` for local overrides. In production `VITE_API_URL` is supplied by the Netlify build env (pinned in the root `netlify.toml`), not a committed `.env.production`.
 
 ## Architecture
 
@@ -105,7 +105,7 @@ src/
 ├── lib/                     errors, toast, date, image (canvas avatar downscale), utils
 ├── pages/                   Login, Home, Chat, Analyzer, NotFound
 ├── services/
-│   ├── api.ts               axios instance + 401 refresh-once interceptor
+│   ├── api.ts               fetch wrapper: JWT injection, 401 refresh-once retry, 20s timeout, AbortSignal
 │   └── tokenStore.ts        sessionStorage-backed observable store
 ├── types/                   auth, chat, api, index
 └── test/                    setup, MSW server + handlers, ambient vitest types
@@ -114,15 +114,15 @@ src/
 ### Auth flow
 
 1. `POST /auth/login/` returns `{ access, refresh, user }`.
-2. Tokens written to `sessionStorage` via `tokenStore`. Axios request interceptor injects `Authorization: Bearer`.
-3. On `401`, response interceptor calls `POST /auth/refresh/` **once** (deduped via in-flight promise), retries the original request.
+2. Tokens written to `sessionStorage` via `tokenStore`. The fetch wrapper injects `Authorization: Bearer` on each request (unless `skipAuth`).
+3. On `401`, the wrapper calls `POST /auth/refresh/` **once** (deduped via in-flight promise), then retries the original request.
 4. Refresh failure → `tokenStore.clear()` → `AuthProvider` subscriber wipes user → `ProtectedRoute` redirects to `/login`.
 
 JWTs in `sessionStorage` are vulnerable to XSS — the Netlify CSP in `netlify.toml` is the primary mitigation. For higher-assurance setups, switch to httpOnly cookies on the backend and remove the bearer plumbing.
 
 ### Bundle splitting
 
-`vite.config.ts` declares `manualChunks` for `react-vendor`, `forms`, `markdown`, `http`, `icons`. Each route is `React.lazy`-loaded. Result: first-paint of `/` skips the markdown + forms chunks entirely.
+`vite.config.ts` declares `manualChunks` for `react-vendor`, `forms`, `markdown`, `icons`. Each route is `React.lazy`-loaded, so the markdown chunk (react-markdown + remark-gfm) loads only with the Chat route, not on first paint.
 
 ## Testing
 
@@ -133,33 +133,35 @@ npm test                  # 33 tests across 6 files (~5s)
 npm run test:coverage     # writes coverage/ HTML report
 ```
 
-MSW intercepts `axios` at the network layer — `src/test/handlers.ts` is the default fixture, individual suites override via `server.use(...)`.
+MSW intercepts `fetch` at the network layer — `src/test/handlers.ts` is the default fixture, individual suites override via `server.use(...)`.
 
 ## Deploying to Netlify
 
-### One-time setup
+Deploy is **monorepo-root-driven**, not per-app. The SPA is built and merged
+with the landing into a single publish dir under `/nullbreach/`. See the root
+[README → Deploy](../../README.md#deploy) for the full setup; the short version:
 
-1. **Create site**: Netlify dashboard → *Add new site* → *Import from Git* → select repo.
-2. **Build settings** (auto-detected from `netlify.toml`):
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-   - Node version: `20` (pinned in `netlify.toml`)
-3. **Environment variables** → set in *Site settings → Environment variables*:
-   - `VITE_API_URL = https://nullbreach-api.wavival.dev`
-   - (optional) `VITE_WHATSAPP_URL`, `VITE_AUTHOR_NAME`, `VITE_AUTHOR_URL`
-4. **Custom domain**: *Domain settings* → add domain → follow CNAME instructions. SSL auto-provisions via Let's Encrypt.
-5. **Deploy**: push to `main`. GitHub Actions runs the CI pipeline; on green, Netlify auto-builds and publishes.
+- Build command (root `netlify.toml`): `npm run build:web` →
+  `build:all` + `scripts/merge-dist.mjs`. Publish dir: `dist`. Node `20`.
+- The SPA's own `index.html` is renamed to `app.html`; Netlify rewrites
+  extension-less SPA routes (`/nullbreach/login`, `/chat`, …) to it.
+- **Required build env:** `VITE_API_URL` (pinned in the root `netlify.toml`).
+  Optional: `VITE_WHATSAPP_URL`, `VITE_AUTHOR_NAME`, `VITE_AUTHOR_URL`.
+- `.github/workflows/ci.yml` gates each PR (lint → typecheck → test → build)
+  before Netlify publishes.
 
-### What's already in the repo
-
-- `netlify.toml` — build config, SPA redirect, immutable asset caching, security headers, CSP.
-- `public/_redirects` — belt-and-suspenders SPA fallback.
-- `public/robots.txt`, `public/sitemap.xml`, `public/manifest.webmanifest`.
-- `.github/workflows/ci.yml` — lint, typecheck, test, build gates the PR before Netlify deploys.
+This app still ships `public/_redirects` (belt-and-suspenders SPA fallback) and
+`public/manifest.webmanifest`. The cache/security headers, CSP, `robots.txt`,
+and sitemap are **generated by `scripts/merge-dist.mjs` at build time** (into
+`dist/_headers` and the apex `robots.txt`) — they are no longer committed files
+under `apps/frontend/public/`.
 
 ### CSP
 
-`netlify.toml` sets a strict `Content-Security-Policy`. `connect-src` whitelists `https://nullbreach-api.wavival.dev`. Update that line if the API origin changes or you add 3rd-party endpoints (Sentry, PostHog, etc.).
+`scripts/merge-dist.mjs` generates a strict `Content-Security-Policy` into
+`dist/_headers`, with `connect-src` derived from `VITE_API_URL` (single source
+of truth). Update the API origin in the root `netlify.toml` if it changes, or
+extend the policy there if you add 3rd-party endpoints (Sentry, PostHog, etc.).
 
 ### Backend CORS
 
@@ -178,18 +180,17 @@ CORS_ALLOW_CREDENTIALS = False  # we use bearer tokens, not cookies
 
 | Symptom                                          | Fix                                                                                                        |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Build error: `VITE_API_URL is required`          | Set the env var in Netlify dashboard (or `.env.production` for local builds).                              |
+| Build error: `VITE_API_URL is required`          | Set the env var in the Netlify build env / root `netlify.toml` (or `.env.local` for local builds).         |
 | Login redirect loop                              | Backend not returning a valid `access` token, or CORS blocking the response. Check Network tab.            |
-| 404 on direct deep-link (`/chat/123`)            | SPA fallback missing — verify `netlify.toml` or `public/_redirects` is published.                          |
-| Fonts flash unstyled                             | `preconnect` to `fonts.gstatic.com` is in `index.html`; if persistent, switch to self-hosted fonts.        |
+| 404 on direct deep-link (`/chat/123`)            | SPA fallback missing — verify the root `netlify.toml` rewrite (or `public/_redirects`) is published.        |
+| Fonts flash unstyled                             | `preconnect` + the font `<link>` are in `index.html`; if persistent, switch to self-hosted fonts.          |
 | Toast notifications stacked off-screen           | `<ToastViewport />` mounts in `App.tsx`; ensure it's not unmounted by a route guard.                       |
 
 ## Roadmap / known gaps
 
-- No `AbortController` cancellation on unmounted fetches.
 - Observability hook in `ErrorBoundary` is a stub; wire Sentry or alternative.
 - Markdown contrast not WCAG-audited against the dark theme.
-- `index.css` pulls Inter + JetBrains Mono from Google Fonts; self-hosting would remove the third-party connect / FOUT risk.
+- Inter + JetBrains Mono load from Google Fonts via a `<link>` in `index.html`; self-hosting would remove the third-party connect / FOUT risk entirely.
 
 ## License
 

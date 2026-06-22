@@ -1,23 +1,32 @@
-import { AxiosError, AxiosHeaders } from "axios";
 import { describe, expect, it } from "vitest";
-import { ApiError, formatApiError, parseApiError, toApiError } from "./errors";
+import {
+  ApiError,
+  apiErrorFromResponse,
+  formatApiError,
+  parseApiError,
+  toApiError,
+} from "./errors";
 
-function axiosResponseError(status: number, data: unknown): AxiosError {
-  const err = new AxiosError(
-    "Request failed",
-    "ERR_BAD_REQUEST",
-    { headers: new AxiosHeaders() },
-    {},
-    {
-      status,
-      statusText: "",
-      data,
-      headers: {},
-      config: { headers: new AxiosHeaders() },
-    },
-  );
-  return err;
-}
+describe("apiErrorFromResponse", () => {
+  it("extracts detail from response body", () => {
+    const err = apiErrorFromResponse(400, { detail: "Bad input" });
+    expect(err.message).toBe("Bad input");
+    expect(err.status).toBe(400);
+  });
+
+  it("extracts first field array message", () => {
+    const err = apiErrorFromResponse(422, { email: ["already in use"] });
+    expect(err.message).toBe("already in use");
+  });
+
+  it("falls back to status default when no body message", () => {
+    expect(apiErrorFromResponse(403, {}).message).toMatch(/permission/i);
+  });
+
+  it("falls back to generic 5xx text", () => {
+    expect(apiErrorFromResponse(599, {}).message).toMatch(/server/i);
+  });
+});
 
 describe("parseApiError", () => {
   it("passes through ApiError", () => {
@@ -29,37 +38,17 @@ describe("parseApiError", () => {
     });
   });
 
-  it("maps ECONNABORTED to timeout message", () => {
-    const err = new AxiosError("timeout", "ECONNABORTED");
+  it("maps a generic Error to status 0 + its message", () => {
+    expect(parseApiError(new Error("boom"))).toEqual({
+      status: 0,
+      message: "boom",
+      data: null,
+    });
+  });
+
+  it("maps an abort DOMException to status 0", () => {
+    const err = new DOMException("aborted", "AbortError");
     expect(parseApiError(err).status).toBe(0);
-    expect(parseApiError(err).message).toMatch(/timed out/i);
-  });
-
-  it("maps ERR_NETWORK to offline message", () => {
-    const err = new AxiosError("net", "ERR_NETWORK");
-    expect(parseApiError(err).status).toBe(0);
-    expect(parseApiError(err).message).toMatch(/no connection/i);
-  });
-
-  it("extracts detail from response body", () => {
-    const err = axiosResponseError(400, { detail: "Bad input" });
-    expect(parseApiError(err).message).toBe("Bad input");
-    expect(parseApiError(err).status).toBe(400);
-  });
-
-  it("extracts first field array message", () => {
-    const err = axiosResponseError(422, { email: ["already in use"] });
-    expect(parseApiError(err).message).toBe("already in use");
-  });
-
-  it("falls back to status default when no body message", () => {
-    const err = axiosResponseError(403, {});
-    expect(parseApiError(err).message).toMatch(/permission/i);
-  });
-
-  it("falls back to generic 5xx text", () => {
-    const err = axiosResponseError(599, {});
-    expect(parseApiError(err).message).toMatch(/server/i);
   });
 
   it("handles unknown error type", () => {
@@ -70,15 +59,13 @@ describe("parseApiError", () => {
 
 describe("formatApiError + toApiError", () => {
   it("formatApiError returns parseApiError().message", () => {
-    const err = axiosResponseError(404, { detail: "Not found" });
-    expect(formatApiError(err)).toBe("Not found");
+    expect(formatApiError(new ApiError("Not found", 404, null))).toBe("Not found");
   });
 
   it("toApiError wraps non-ApiError into ApiError", () => {
-    const err = axiosResponseError(404, { detail: "Not found" });
-    const api = toApiError(err);
+    const api = toApiError(new Error("Not found"));
     expect(api).toBeInstanceOf(ApiError);
-    expect(api.status).toBe(404);
+    expect(api.status).toBe(0);
     expect(api.message).toBe("Not found");
   });
 

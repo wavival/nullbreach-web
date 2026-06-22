@@ -15,9 +15,9 @@ Monorepo with three apps:
 
 | App | Path | Stack | Role |
 | --- | --- | --- | --- |
-| **Frontend** | [`apps/frontend`](apps/frontend) | React 18 · Vite · TypeScript · Tailwind | Authenticated SPA — chat, analyzer, account. |
-| **Landing** | [`apps/landing`](apps/landing) | Astro · React island · Tailwind | Public marketing page (ES/EN). Links into the SPA for sign-in. |
-| **Backend** | [`apps/backend`](apps/backend) | Django · Django REST · JWT | API — auth, chat sessions, message history, code analysis. |
+| **Frontend** | [`apps/frontend`](apps/frontend/README.md) | React 18 · Vite 8 · TypeScript · Tailwind | Authenticated SPA — chat, analyzer, account. |
+| **Landing** | [`apps/landing`](apps/landing/README.md) | Astro · Tailwind (zero client JS) | Public marketing page (ES/EN), static. Links into the SPA for sign-in. |
+| **Backend** | [`apps/backend`](apps/backend/README.md) | Django · Django REST · JWT | API — auth, chat sessions, message history, code analysis. |
 
 ## Layout
 

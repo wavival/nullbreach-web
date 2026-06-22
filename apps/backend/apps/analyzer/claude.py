@@ -53,7 +53,14 @@ def analyze_code(code: str, language: str = "") -> dict:
         messages=[{"role": "user", "content": user_content}],
     )
 
-    raw = response.content[0].text.strip()
+    # A refusal/stop block (or any non-text first block) leaves content without
+    # a `.text`; guard so it surfaces as a clean 502 (view catches ValueError)
+    # instead of an IndexError 500.
+    blocks = getattr(response, "content", None) or []
+    text = getattr(blocks[0], "text", None) if blocks else None
+    if not text:
+        raise ValueError("Claude returned no text content.")
+    raw = text.strip()
 
     # Claude is asked for raw JSON but sometimes wraps it in ```json fences;
     # strip them so the downstream json.loads call succeeds.

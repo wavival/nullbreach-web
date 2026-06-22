@@ -80,6 +80,19 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 _testing = "test" in sys.argv
+
+# Guard against an accidental DEBUG=True in the production env. DEBUG gates
+# secure cookies, HSTS, and the ANTHROPIC_API_KEY requirement below, so leaving
+# it on while serving real hosts silently disables the whole security posture.
+if DEBUG and not _testing:
+    _local_hosts = {"localhost", "127.0.0.1", "[::1]", "*", ""}
+    _public_hosts = [h for h in ALLOWED_HOSTS if h.strip() not in _local_hosts]
+    if _public_hosts:
+        raise ImproperlyConfigured(
+            f"DEBUG=True is not allowed with non-local ALLOWED_HOSTS {_public_hosts}. "
+            "Set DEBUG=False in production."
+        )
+
 DATABASE_URL = env("DATABASE_URL", default="sqlite:///db.sqlite3")
 
 if not DEBUG and not _testing and DATABASE_URL == "sqlite:///db.sqlite3":
@@ -195,6 +208,9 @@ REST_FRAMEWORK = {
         "user": "500/hour",
         "anon": "60/hour",
         "auth": "10/min",
+        # Per-account (keyed by submitted email) — caps credential stuffing
+        # against a single account from many IPs, which "auth" (per-IP) misses.
+        "auth_login": "10/hour",
         "claude_chat": "60/hour",
         "claude_scan": "20/hour",
     },
@@ -230,6 +246,17 @@ SIMPLE_JWT = {
 # ── CORS ───────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="http://localhost:5173").split(",")
 CORS_ALLOW_CREDENTIALS = True
+
+# With credentialed CORS, a stray http:// or localhost origin in prod is a
+# session-theft risk. Fail closed at boot if prod origins aren't HTTPS.
+if not DEBUG and not _testing:
+    _bad_origins = [
+        o for o in CORS_ALLOWED_ORIGINS if not o.startswith("https://") or "localhost" in o
+    ]
+    if _bad_origins:
+        raise ImproperlyConfigured(
+            f"CORS_ALLOWED_ORIGINS must be https and non-localhost in production: {_bad_origins}"
+        )
 
 # ── CSRF ───────────────────────────────────────────────────────────────────────
 # Django 4+ requires the scheme on trusted origins. Needed for the Django admin

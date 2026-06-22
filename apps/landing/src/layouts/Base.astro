@@ -17,14 +17,14 @@ const lang = Astro.url.pathname.startsWith(`${base}en`) ? "en" : "es";
 // Per-language metadata. Each URL is a standalone, single-language document.
 const COPY = {
   es: {
-    title: "NullBreach — Asistente de ciberseguridad con IA",
+    title: "NullBreach: Asistente de ciberseguridad con IA",
     description:
       "NullBreach: asistente de ciberseguridad con IA. Chat sobre vulnerabilidades, OWASP, modelado de amenazas y análisis estático de código.",
     locale: "es_ES",
     altLocale: "en_US",
   },
   en: {
-    title: "NullBreach — AI cybersecurity assistant",
+    title: "NullBreach: AI cybersecurity assistant",
     description:
       "NullBreach: an AI-powered cybersecurity assistant. Chat about vulnerabilities, OWASP, threat modeling, and static source code analysis.",
     locale: "en_US",
@@ -40,6 +40,33 @@ const esUrl = new URL(base, Astro.site).href;
 const enUrl = new URL(`${base}en/`, Astro.site).href;
 const canonical = lang === "en" ? enUrl : esUrl;
 const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
+const authorUrl = "https://wavival.dev";
+
+// Structured data: the landing IS the indexable page (the SPA shell at app.html
+// is walled off), so the schema belongs here, per-language. SoftwareApplication
+// describes the product; WebSite ties the two language URLs to one site.
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "NullBreach",
+    url: canonical,
+    description,
+    applicationCategory: "SecurityApplication",
+    operatingSystem: "Web",
+    inLanguage: lang,
+    author: { "@type": "Person", name: "Valentina Ramírez", url: authorUrl },
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "NullBreach",
+    url: esUrl,
+    inLanguage: lang,
+    author: { "@type": "Person", name: "Valentina Ramírez", url: authorUrl },
+  },
+];
 ---
 
 <!doctype html>
@@ -49,6 +76,11 @@ const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0F172A" />
     <meta name="color-scheme" content="dark" />
+
+    <!-- Mark JS-on before paint so scroll-reveal can start hidden without a
+         flash. No-JS users never get the `js` class → content stays visible.
+         Byte-identical across pages so merge-dist's CSP hash covers both. -->
+    <script is:inline>document.documentElement.classList.add("js");</script>
 
     <!-- SPA-like client navigation (cross-fade) for in-site links + the
          language switch. Falls back to full page loads without JS. -->
@@ -63,6 +95,10 @@ const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
       rel="preconnect"
       href="https://fonts.gstatic.com"
       crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     />
 
     <title>{title}</title>
@@ -94,6 +130,10 @@ const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="NullBreach" />
+
+    <!-- Structured data (SoftwareApplication + WebSite), per-language. -->
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
     <a
@@ -103,5 +143,32 @@ const ogImage = new URL(`${base}og.jpg`, Astro.site).href;
       <T es="Saltar al contenido" en="Skip to content" />
     </a>
     <slot />
+
+    <!-- Scroll-reveal: fade/slide [data-reveal] elements in as they enter view.
+         Astro hoists this to an external module (CSP 'self'-safe). Re-inits on
+         every ViewTransitions navigation via astro:page-load (fires on first
+         load too). Reduced-motion / no-IO → reveal everything immediately. -->
+    <script>
+      function initReveal() {
+        const els = document.querySelectorAll("[data-reveal]");
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduce || !("IntersectionObserver" in window)) {
+          els.forEach((el) => el.classList.add("in"));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              e.target.classList.add("in");
+              obs.unobserve(e.target);
+            }
+          },
+          { rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
+        );
+        els.forEach((el) => io.observe(el));
+      }
+      document.addEventListener("astro:page-load", initReveal);
+    </script>
   </body>
 </html>

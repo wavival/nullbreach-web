@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "NullBreach marketing landing page — Astro + React islands. Static-first, bilingual (ES/EN). Links into the React SPA for sign-in.",
+  "description": "NullBreach marketing landing page — Astro, static-first, zero client JS. Bilingual (ES/EN). Links into the React SPA for sign-in.",
   "author": {
     "name": "Valentina Ramírez",
     "url": "https://wavival.dev"
@@ -17,20 +17,14 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
-    "@astrojs/react": "^3.6.3",
     "@astrojs/sitemap": "^3.2.1",
     "@astrojs/tailwind": "^5.1.4",
     "astro": "^4.16.18",
-    "lucide-react": "^0.454.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
     "tailwindcss-animate": "^1.0.7"
   }
 }

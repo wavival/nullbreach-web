@@ -418,6 +418,7 @@ export function Chat() {
 
   return (
     <div className="h-full">
+      <h1 className="sr-only">Chat</h1>
       <div className="relative h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)] w-full overflow-hidden bg-gradient-to-br from-surface via-surface to-surface-alt">
         {/* Backgrounds */}
         <div
@@ -1134,7 +1135,7 @@ function EmptyState() {
       </h3>
       <p className="max-w-[440px] text-body text-foreground-muted">
         Vulnerabilities, OWASP, hardening, threat modeling, code analysis.
-        Start typing below — I'll create a session automatically.
+        Start typing below. I'll create a session automatically.
       </p>
     </div>
   );

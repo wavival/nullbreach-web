@@ -205,13 +205,21 @@ Request (`content`: 1–32,000 chars):
 ```json
 { "content": "How do I prevent SQL injection in Django?" }
 ```
-Response (`201`, the persisted assistant message):
+Response (`201`) — both persisted messages, `user_message` and `assistant_message`, each a serialized `Message`:
 ```json
 {
-  "id": 42,
-  "role": "assistant",
-  "content": "To prevent SQL injection in Django, always use the ORM or parameterized queries...",
-  "created_at": "2026-05-11T12:00:00Z"
+  "user_message": {
+    "id": 41,
+    "role": "user",
+    "content": "How do I prevent SQL injection in Django?",
+    "created_at": "2026-05-11T12:00:00Z"
+  },
+  "assistant_message": {
+    "id": 42,
+    "role": "assistant",
+    "content": "To prevent SQL injection in Django, always use the ORM or parameterized queries...",
+    "created_at": "2026-05-11T12:00:01Z"
+  }
 }
 ```
 The session auto-titles itself from the first user message (truncated to 80 chars) if no title is set.

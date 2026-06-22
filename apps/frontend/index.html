@@ -19,28 +19,30 @@
       crossorigin="anonymous"
     />
     <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+    <link
       rel="preconnect"
       href="https://nullbreach-api.wavival.dev"
       crossorigin="anonymous"
     />
 
-    <title>NullBreach — AI cybersecurity assistant</title>
+    <title>NullBreach: AI cybersecurity assistant</title>
     <meta
       name="description"
       content="NullBreach: AI-powered cybersecurity assistant. Chat about vulnerabilities, OWASP, threat modeling, and static source code analysis."
     />
-    <meta name="robots" content="index, follow" />
+    <!-- App shell behind login: noindex so it doesn't compete with the Astro
+         landing for the /nullbreach/ canonical. The landing is the SEO entry. -->
+    <meta name="robots" content="noindex, follow" />
     <meta name="author" content="Valentina Ramírez" />
-    <meta
-      name="keywords"
-      content="cybersecurity, OWASP, code analysis, vulnerabilities, AI, threat modeling, hardening"
-    />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="NullBreach" />
     <meta property="og:url" content="https://wavival.dev/nullbreach/" />
-    <meta property="og:title" content="NullBreach — AI cybersecurity assistant" />
+    <meta property="og:title" content="NullBreach: AI cybersecurity assistant" />
     <meta
       property="og:description"
       content="AI cybersecurity assistant. Vulnerabilities, OWASP, static code analysis."
@@ -52,11 +54,13 @@
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="NullBreach" />
+    <meta property="og:locale:alternate" content="es_ES" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://wavival.dev/nullbreach/" />
-    <meta name="twitter:title" content="NullBreach — AI cybersecurity assistant" />
+    <meta name="twitter:title" content="NullBreach: AI cybersecurity assistant" />
     <meta
       name="twitter:description"
       content="AI cybersecurity assistant. Vulnerabilities, OWASP, static code analysis."
@@ -65,30 +69,9 @@
       name="twitter:image"
       content="https://wavival.dev/nullbreach/og.jpg"
     />
-
-    <!-- Structured data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "NullBreach",
-        "url": "https://wavival.dev/nullbreach/",
-        "description": "AI cybersecurity assistant. Vulnerabilities, OWASP, threat modeling, and static source code analysis.",
-        "applicationCategory": "SecurityApplication",
-        "operatingSystem": "Web",
-        "inLanguage": "en",
-        "author": {
-          "@type": "Person",
-          "name": "Valentina Ramírez",
-          "url": "https://wavival.dev"
-        },
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
-      }
-    </script>
+    <meta name="twitter:image:alt" content="NullBreach" />
+    <!-- No JSON-LD here: this app shell is noindex. The crawlable Astro landing
+         (apps/landing) carries the SoftwareApplication + WebSite schema. -->
   </head>
   <body>
     <div id="root"></div>

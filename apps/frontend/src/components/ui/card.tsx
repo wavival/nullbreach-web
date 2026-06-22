@@ -9,8 +9,10 @@ const Card = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded bg-surface-alt border border-border p-lg shadow-base text-foreground",
-      "transition-shadow duration-hover ease-hover",
-      interactive && "hover:shadow-medium hover:border-neutral cursor-pointer",
+      "transition-all duration-hover ease-hover",
+      // Same hover language as SessionCard / the landing cards: lift + green glow.
+      interactive &&
+        "cursor-pointer hover:-translate-y-[2px] hover:border-primary/50 hover:shadow-[0_12px_30px_-12px_rgba(34,197,94,0.35)]",
       className,
     )}
     {...props}
