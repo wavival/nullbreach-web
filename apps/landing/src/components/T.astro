@@ -1,0 +1,19 @@
+---
+/**
+ * Bilingual text. Emits both languages inline; global CSS hides the inactive
+ * one based on <html data-lang>. Keeps the page static (no per-string island).
+ *
+ *   <T es="Iniciar sesión" en="Sign in" />
+ */
+interface Props {
+  es: string;
+  en: string;
+  class?: string;
+}
+const { es, en, class: className } = Astro.props;
+---
+<span data-lang-text="es" class={className} set:html={es} /><span
+  data-lang-text="en"
+  class={className}
+  set:html={en}
+/>
