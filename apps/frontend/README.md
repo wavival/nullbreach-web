@@ -34,23 +34,23 @@ Related docs: [DESIGN.md](./DESIGN.md) · [COMPONENTS.md](./COMPONENTS.md) · [C
 
 ## Stack
 
-| Layer       | Choice                                                    |
-| ----------- | --------------------------------------------------------- |
-| Build       | Vite 8, TypeScript 5 (strict)                             |
-| UI          | React 18, React Router 6, Tailwind 3, Radix Slot          |
-| Forms       | react-hook-form + zod                                     |
+| Layer       | Choice                                                      |
+| ----------- | ----------------------------------------------------------- |
+| Build       | Vite 8, TypeScript 5 (strict)                               |
+| UI          | React 18, React Router 6, Tailwind 3, Radix Slot            |
+| Forms       | react-hook-form + zod                                       |
 | HTTP        | native `fetch` wrapper (JWT refresh + 20s timeout, no deps) |
-| Markdown    | react-markdown + remark-gfm                               |
-| Toasts      | react-hot-toast                                           |
-| Tests       | Vitest + Testing Library + MSW                            |
-| CI          | GitHub Actions: lint → typecheck → test → build           |
+| Markdown    | react-markdown + remark-gfm                                 |
+| Toasts      | react-hot-toast                                             |
+| Tests       | Vitest + Testing Library + MSW                              |
+| CI          | GitHub Actions: lint → typecheck → test → build             |
 | Hosting     | Netlify, merged with the landing under `/nullbreach/` (see root README) |
 
 ## Local setup
 
 ```bash
 git clone git@github.com:wavival/nullbreach-web.git
-cd nullbreach-web
+cd nullbreach-web/apps/frontend
 npm install
 cp .env.example .env.local       # adjust VITE_API_URL if backend lives elsewhere
 npm run dev                      # http://localhost:5173/nullbreach/
@@ -122,7 +122,14 @@ JWTs in `sessionStorage` are vulnerable to XSS — the Netlify CSP in `netlify.t
 
 ### Bundle splitting
 
-`vite.config.ts` declares `manualChunks` for `react-vendor`, `forms`, `markdown`, `icons`. Each route is `React.lazy`-loaded, so the markdown chunk (react-markdown + remark-gfm) loads only with the Chat route, not on first paint.
+`vite.config.ts` declares `manualChunks` (as a function, required by Vite 8) for `react-vendor`, `forms`, `markdown`, and `icons`. Each route is `React.lazy`-loaded, so the markdown chunk (react-markdown + remark-gfm) loads only with the Chat route, not on first paint.
+
+| Chunk          | Packages                                          |
+| -------------- | ------------------------------------------------- |
+| `react-vendor` | `react`, `react-dom`, `react-router-dom`          |
+| `forms`        | `react-hook-form`, `@hookform/resolvers`, `zod`   |
+| `markdown`     | `react-markdown`, `remark-gfm`                    |
+| `icons`        | `lucide-react`                                    |
 
 ## Testing
 
